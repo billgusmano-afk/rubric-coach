@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 /* ───────────────────── Types ───────────────────── */
@@ -144,6 +144,7 @@ export default function RoleplayPage() {
   const [selectedFrameworkIds, setSelectedFrameworkIds] = useState<string[]>(["human-edge"]);
 
   /* ── Section 5: Document ── */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [docFile, setDocFile] = useState<File | null>(null);
   const [docParsing, setDocParsing] = useState(false);
   const [docSummary, setDocSummary] = useState("");
