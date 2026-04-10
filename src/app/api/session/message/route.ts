@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { getPresetCriteria } from "@/lib/frameworks";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -36,15 +37,35 @@ export async function POST(request: Request) {
     content: m.content,
   }));
 
-  // Get framework criteria for scoring
-  let criteriaList: { id: string; name: string; description: string; weight_percent: number }[] = [];
-  if (framework_ids && framework_ids.length > 0) {
+  // Get criteria for scoring — combine preset + custom DB frameworks
+  const presetIds = ["human-edge", "financial-acumen", "challenger-sale", "meddic", "strategic-mgmt"];
+  const selectedPresetIds = (framework_ids || []).filter((id: string) => presetIds.includes(id));
+  const selectedDbIds = (framework_ids || []).filter((id: string) => !presetIds.includes(id));
+
+  // Get preset criteria
+  const presetCriteria = getPresetCriteria(selectedPresetIds).map((c) => ({
+    id: c.id,
+    name: c.name,
+    description: c.description,
+    weight_percent: c.weight_percent,
+  }));
+
+  // Get DB criteria
+  let dbCriteria: { id: string; name: string; description: string; weight_percent: number }[] = [];
+  if (selectedDbIds.length > 0) {
     const { data: criteria } = await supabase
       .from("criteria")
       .select("id, name, description, weight_percent, framework_id")
-      .in("framework_id", framework_ids);
-    criteriaList = criteria || [];
+      .in("framework_id", selectedDbIds);
+    dbCriteria = (criteria || []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description || "",
+      weight_percent: c.weight_percent,
+    }));
   }
+
+  const allCriteria = [...presetCriteria, ...dbCriteria];
 
   // Run both AI calls in parallel
   const [clientResponse, coachResponse] = await Promise.all([
@@ -59,7 +80,7 @@ export async function POST(request: Request) {
     // 2. AI Coach scoring + nudge
     anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 800,
+      max_tokens: 1200,
       messages: [
         {
           role: "user",
@@ -69,7 +90,7 @@ Here is the conversation so far:
 ${conversationHistory.map((m) => `${m.role === "user" ? "SALES REP" : "CLIENT"}: ${m.content}`).join("\n\n")}
 
 Score the sales rep's LATEST message against these criteria (1-5 scale):
-${criteriaList.map((c) => `- ${c.name} (${c.weight_percent}%): ${c.description || ""}`).join("\n")}
+${allCriteria.map((c) => `- ${c.name} [id: ${c.id}] (${c.weight_percent}%): ${c.description}`).join("\n")}
 
 Return a JSON object with:
 {
