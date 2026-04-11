@@ -114,9 +114,11 @@ export default function SessionPage() {
         setSessionData(data);
         setMessages([{ role: "assistant", content: data.opening_message }]);
 
-        // Play opening message if voice enabled
+        // Play opening message if voice enabled (slight delay for page to settle)
         if (data.voice_enabled) {
-          playTTS(data.opening_message, data.disc_profile);
+          setTimeout(() => {
+            playTTS(data.opening_message, data.disc_profile);
+          }, 600);
         }
       } else {
         // No session data found — redirect back
@@ -149,10 +151,67 @@ export default function SessionPage() {
     return `${m}:${s}`;
   }
 
-  // Voice status
+  // Voice status & selected voice
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
+  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
-  // Text-to-speech
+  // Load voices — prefer Samantha/Victoria/Karen for a natural female CFO voice
+  useEffect(() => {
+    function loadVoices() {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) return;
+
+      // Preferred voices in order of priority
+      const preferred = ["Samantha", "Victoria", "Karen", "Zira", "Google US English"];
+      for (const name of preferred) {
+        const match = voices.find((v) => v.name.includes(name) && v.lang.startsWith("en"));
+        if (match) {
+          selectedVoiceRef.current = match;
+          return;
+        }
+      }
+
+      // Fallback: any English female-sounding voice, or first English voice
+      const englishVoice = voices.find((v) => v.lang.startsWith("en"));
+      if (englishVoice) {
+        selectedVoiceRef.current = englishVoice;
+      }
+    }
+
+    loadVoices();
+    // Voices may load async — listen for the event
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
+  // Speak text using browser speech synthesis
+  function speak(text: string) {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setVoiceStatus("error");
+      return;
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (selectedVoiceRef.current) {
+      utterance.voice = selectedVoiceRef.current;
+    }
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    utterance.onstart = () => setVoiceStatus("playing");
+    utterance.onend = () => setVoiceStatus("idle");
+    utterance.onerror = () => setVoiceStatus("error");
+
+    setVoiceStatus("loading");
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // ElevenLabs TTS with browser speech fallback
   async function playTTS(text: string, discProfile: string) {
     setVoiceStatus("loading");
     try {
@@ -174,32 +233,21 @@ export default function SessionPage() {
         audioRef.current = audio;
         audio.onplay = () => setVoiceStatus("playing");
         audio.onended = () => setVoiceStatus("idle");
-        audio.onerror = () => setVoiceStatus("error");
-        audio.play().catch(() => setVoiceStatus("error"));
+        audio.onerror = () => {
+          // Fallback to browser speech
+          speak(text);
+        };
+        audio.play().catch(() => {
+          // Fallback to browser speech
+          speak(text);
+        });
       } else {
-        // Try browser built-in speech synthesis as fallback
-        if ("speechSynthesis" in window) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.rate = 0.95;
-          utterance.onstart = () => setVoiceStatus("playing");
-          utterance.onend = () => setVoiceStatus("idle");
-          window.speechSynthesis.speak(utterance);
-        } else {
-          console.warn("TTS response not audio:", res.status, contentType);
-          setVoiceStatus("error");
-        }
+        // Fallback to browser speech synthesis
+        speak(text);
       }
     } catch {
-      // Use browser speech synthesis as fallback
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.95;
-        utterance.onstart = () => setVoiceStatus("playing");
-        utterance.onend = () => setVoiceStatus("idle");
-        window.speechSynthesis.speak(utterance);
-      } else {
-        setVoiceStatus("error");
-      }
+      // Fallback to browser speech synthesis
+      speak(text);
     }
   }
 
@@ -246,8 +294,12 @@ export default function SessionPage() {
   async function endSession() {
     if (!sessionData) return;
     setEnding(true);
-    // Stop any playing audio
+    // Stop any playing audio and cancel speech synthesis
     if (audioRef.current) audioRef.current.pause();
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setVoiceStatus("idle");
 
     try {
       const res = await fetch("/api/session/end", {
