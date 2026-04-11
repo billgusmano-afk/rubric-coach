@@ -5,18 +5,18 @@ import { NextResponse } from "next/server";
  * Text-to-Speech via ElevenLabs API.
  * Requires ELEVENLABS_API_KEY in environment.
  *
- * DISC-matched voices:
- *   D (Dominant)      → "Adam" (deep, authoritative)
- *   I (Influential)   → "Josh" (warm, energetic)
- *   S (Steady)        → "Sam"  (calm, measured)
- *   C (Conscientious) → "Antoni" (precise, analytical)
+ * DISC-matched voices (using ElevenLabs pre-made voices):
+ *   D (Dominant)      → "Brian" (deep, authoritative male)
+ *   I (Influential)   → "Jessica" (warm, energetic female)
+ *   S (Steady)        → "Chris" (calm, measured male)
+ *   C (Conscientious) → "Laura" (precise, clear female)
  */
 
 const DISC_VOICES: Record<string, string> = {
-  D: "pNInz6obpgDQGcFmaJgB", // Adam
-  I: "TxGEqnHWrfWFTfGW9XjX", // Josh
-  S: "yoZ06aMxZJJ28mfd3POQ", // Sam
-  C: "ErXwobaYiN019PkySvjV", // Antoni
+  D: "nPczCjzI2devNBz1zQrb", // Brian
+  I: "cgSgspJ2msm6clMCkdW9", // Jessica
+  S: "iP95p4xoKVk53GoZ742B", // Chris
+  C: "FGY2WhTYpPnrIDTdsKH5", // Laura
 };
 
 export async function POST(request: Request) {
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
+    console.error("TTS: ELEVENLABS_API_KEY not set");
     return NextResponse.json({ error: "ElevenLabs API key not configured" }, { status: 503 });
   }
 
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           text: cappedText,
-          model_id: "eleven_monolingual_v1",
+          model_id: "eleven_multilingual_v2",
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
@@ -67,8 +68,42 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("ElevenLabs error:", err);
-      return NextResponse.json({ error: "TTS generation failed" }, { status: 500 });
+      console.error("ElevenLabs error:", response.status, err);
+
+      // If voice not found, try with a known default voice
+      if (response.status === 404 || err.includes("voice_not_found")) {
+        const fallbackResponse = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM`,
+          {
+            method: "POST",
+            headers: {
+              "xi-api-key": apiKey,
+              "Content-Type": "application/json",
+              Accept: "audio/mpeg",
+            },
+            body: JSON.stringify({
+              text: cappedText,
+              model_id: "eleven_multilingual_v2",
+              voice_settings: {
+                stability: 0.5,
+                similarity_boost: 0.75,
+              },
+            }),
+          }
+        );
+
+        if (fallbackResponse.ok) {
+          const audioBuffer = await fallbackResponse.arrayBuffer();
+          return new NextResponse(audioBuffer, {
+            headers: {
+              "Content-Type": "audio/mpeg",
+              "Content-Length": audioBuffer.byteLength.toString(),
+            },
+          });
+        }
+      }
+
+      return NextResponse.json({ error: `TTS failed: ${err}` }, { status: 500 });
     }
 
     const audioBuffer = await response.arrayBuffer();

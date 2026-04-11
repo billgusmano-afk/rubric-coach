@@ -149,15 +149,22 @@ export default function SessionPage() {
     return `${m}:${s}`;
   }
 
+  // Voice status
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
+
   // Text-to-speech
   async function playTTS(text: string, discProfile: string) {
+    setVoiceStatus("loading");
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, disc_profile: discProfile }),
       });
-      if (res.ok && res.headers.get("content-type")?.includes("audio")) {
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (res.ok && contentType.includes("audio")) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         if (audioRef.current) {
@@ -165,10 +172,34 @@ export default function SessionPage() {
         }
         const audio = new Audio(url);
         audioRef.current = audio;
-        audio.play();
+        audio.onplay = () => setVoiceStatus("playing");
+        audio.onended = () => setVoiceStatus("idle");
+        audio.onerror = () => setVoiceStatus("error");
+        audio.play().catch(() => setVoiceStatus("error"));
+      } else {
+        // Try browser built-in speech synthesis as fallback
+        if ("speechSynthesis" in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.95;
+          utterance.onstart = () => setVoiceStatus("playing");
+          utterance.onend = () => setVoiceStatus("idle");
+          window.speechSynthesis.speak(utterance);
+        } else {
+          console.warn("TTS response not audio:", res.status, contentType);
+          setVoiceStatus("error");
+        }
       }
     } catch {
-      // TTS unavailable — silent fallback
+      // Use browser speech synthesis as fallback
+      if ("speechSynthesis" in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95;
+        utterance.onstart = () => setVoiceStatus("playing");
+        utterance.onend = () => setVoiceStatus("idle");
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setVoiceStatus("error");
+      }
     }
   }
 
@@ -280,8 +311,16 @@ export default function SessionPage() {
                 {sessionData.company_name} · {sessionData.meeting_type || "Session"}
               </span>
               {sessionData.voice_enabled && (
-                <span className="inline-flex px-2 py-0.5 bg-accent/[0.08] text-accent text-[10px] font-semibold rounded-full">
-                  🔊 Voice
+                <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                  voiceStatus === "playing" ? "bg-green/10 text-green animate-pulse" :
+                  voiceStatus === "loading" ? "bg-gold/10 text-[#92400e]" :
+                  voiceStatus === "error" ? "bg-red/10 text-red" :
+                  "bg-accent/[0.08] text-accent"
+                }`}>
+                  {voiceStatus === "playing" ? "🔊 Speaking..." :
+                   voiceStatus === "loading" ? "🔊 Loading..." :
+                   voiceStatus === "error" ? "🔇 Voice error" :
+                   "🔊 Voice on"}
                 </span>
               )}
             </div>
