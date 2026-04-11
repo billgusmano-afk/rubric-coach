@@ -76,7 +76,12 @@ export async function POST(request: Request) {
     mic_enabled,
   } = body;
 
-  // Create the session record with all setup fields
+  // Separate preset framework IDs (strings) from DB framework IDs (UUIDs)
+  const presetIds = ["human-edge", "financial-acumen", "challenger-sale", "meddic", "strategic-mgmt"];
+  const allFrameworkIds = framework_ids || [];
+  const dbFrameworkIds = allFrameworkIds.filter((id: string) => !presetIds.includes(id));
+
+  // Create the session record — only store real UUIDs in the uuid[] column
   const { data: session, error } = await supabase
     .from("sessions")
     .insert({
@@ -93,7 +98,7 @@ export async function POST(request: Request) {
       expected_objection,
       disc_profile,
       disc_blend,
-      framework_ids: framework_ids || [],
+      framework_ids: dbFrameworkIds,
       document_context,
       voice_enabled: voice_enabled ?? true,
       mic_enabled: mic_enabled ?? false,
