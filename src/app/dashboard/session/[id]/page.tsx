@@ -3,6 +3,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+/* ───────────────────── Avatar helpers ───────────────────── */
+
+/**
+ * Build a deterministic DiceBear avatar URL for the customer.
+ * Same seed always yields the same avatar — picking key_contact first
+ * (most specific) and falling back to company_name keeps the avatar
+ * stable across a session.
+ */
+function customerAvatarUrl(seed: string): string {
+  const cleanSeed = encodeURIComponent(seed || "customer");
+  return `https://api.dicebear.com/7.x/notionists/svg?seed=${cleanSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&radius=50`;
+}
+
 /* ───────────────────── Types ───────────────────── */
 
 interface ChatMessage {
@@ -329,15 +342,32 @@ export default function SessionPage() {
 
   if (!sessionData) return null;
 
+  /* ── Customer avatar (deterministic from contact/company) ── */
+  const avatarSeed =
+    sessionData.company_research?.key_contacts?.split(",")[0]?.trim() ||
+    sessionData.company_research?.company_name ||
+    sessionData.company_name ||
+    "customer";
+  const customerAvatar = customerAvatarUrl(avatarSeed);
+  const customerDisplayName =
+    sessionData.company_research?.key_contacts?.split(",")[0]?.trim() ||
+    sessionData.company_name ||
+    "Customer";
+
   /* ═══════════════════════════════════════════════════════
      RENDER: "Begin Session" gate (user gesture needed for audio)
      ═══════════════════════════════════════════════════════ */
   if (!sessionStarted) {
     return (
       <div className="p-8 flex flex-col items-center min-h-[500px] max-w-[640px] mx-auto text-center">
-        <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6">
-          <span className="text-3xl">🎙</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={customerAvatar}
+          alt={`${customerDisplayName} avatar`}
+          className="w-20 h-20 rounded-full mb-4 border-2 border-border shadow-card bg-white"
+        />
+        <div className="text-xs text-ink-3 mb-3 uppercase tracking-wide">You&apos;re meeting with</div>
+        <div className="font-semibold text-sm text-ink mb-5">{customerDisplayName}</div>
         <h1 className="font-serif text-[24px] text-ink mb-2">Ready to begin</h1>
         <p className="text-sm text-ink-3 mb-2">
           {sessionData.company_name} · {sessionData.meeting_type}
@@ -430,9 +460,12 @@ export default function SessionPage() {
               {sessionData.company_research && (
                 <div className="bg-surface/60 rounded-sm p-4 border border-border">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-accent to-[#7b6dfa] rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0">
-                      {sessionData.company_research.company_name?.substring(0, 2).toUpperCase() || "CO"}
-                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={customerAvatar}
+                      alt={`${customerDisplayName} avatar`}
+                      className="w-10 h-10 rounded-full shrink-0 border border-border bg-white"
+                    />
                     <div>
                       <div className="font-semibold text-sm text-ink">
                         {sessionData.company_research.company_name}
@@ -607,13 +640,18 @@ export default function SessionPage() {
           >
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    msg.role === "assistant" ? "bg-accent/10 text-accent" : "bg-accent text-white"
-                  }`}
-                >
-                  {msg.role === "assistant" ? "AI" : "You"}
-                </div>
+                {msg.role === "assistant" ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={customerAvatar}
+                    alt={`${customerDisplayName} avatar`}
+                    className="w-8 h-8 rounded-full shrink-0 border border-border bg-white"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-accent text-white">
+                    You
+                  </div>
+                )}
                 <div
                   className={`max-w-[72%] px-3.5 py-2.5 rounded-[12px] text-[13px] leading-relaxed ${
                     msg.role === "assistant"
@@ -627,9 +665,12 @@ export default function SessionPage() {
             ))}
             {sending && (
               <div className="flex gap-2.5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-accent/10 text-accent shrink-0">
-                  AI
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={customerAvatar}
+                  alt={`${customerDisplayName} avatar`}
+                  className="w-8 h-8 rounded-full shrink-0 border border-border bg-white"
+                />
                 <div className="px-3.5 py-2.5 bg-white border border-border rounded-[12px]">
                   <div className="flex gap-1">
                     <span className="w-1.5 h-1.5 bg-ink-3 rounded-full animate-pulse" />

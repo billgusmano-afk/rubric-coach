@@ -467,9 +467,14 @@ export default function RoleplayPage() {
           {research && (
             <div className="mb-4 p-4 bg-surface rounded-sm border border-border">
               <div className="flex gap-4 items-start">
-                <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent-2 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0">
-                  {research.company_name?.substring(0, 2).toUpperCase() || "CO"}
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(
+                    research.key_contacts?.split(",")[0]?.trim() || research.company_name || "customer"
+                  )}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&radius=50`}
+                  alt={`${research.company_name} customer avatar`}
+                  className="w-12 h-12 rounded-full shrink-0 border border-border bg-white"
+                />
                 <div className="flex-1">
                   <div className="font-semibold text-sm mb-1">{research.company_name}</div>
                   <div className="flex flex-wrap gap-1.5 mb-2">
