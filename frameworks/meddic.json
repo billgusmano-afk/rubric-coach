@@ -1,0 +1,85 @@
+{
+  "id": "meddic",
+  "name": "MEDDIC",
+  "description": "Evaluates qualification rigor: Metrics, Economic Buyer, Decision Criteria, Decision Process, Identify Pain, Champion.",
+  "criteria": [
+    {
+      "id": "md-metrics",
+      "name": "Metrics",
+      "description": "Uncovers and validates the quantifiable measures of success",
+      "weight_percent": 18,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No attempt to identify success metrics" },
+        { "level": 2, "label": "Below Average", "description": "Asks about goals but not specific KPIs" },
+        { "level": 3, "label": "Adequate", "description": "Identifies some metrics but doesn't validate them" },
+        { "level": 4, "label": "Good", "description": "Clear metrics tied to business outcomes" },
+        { "level": 5, "label": "Excellent", "description": "Validated metrics with baseline and target numbers" }
+      ]
+    },
+    {
+      "id": "md-economic-buyer",
+      "name": "Economic Buyer",
+      "description": "Identifies and engages the person with budget authority",
+      "weight_percent": 18,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No awareness of who controls the budget" },
+        { "level": 2, "label": "Below Average", "description": "Assumes current contact is the decision maker" },
+        { "level": 3, "label": "Adequate", "description": "Asks who else is involved but doesn't map power" },
+        { "level": 4, "label": "Good", "description": "Identifies economic buyer and plans engagement" },
+        { "level": 5, "label": "Excellent", "description": "Maps buying committee and tailors approach to EB" }
+      ]
+    },
+    {
+      "id": "md-decision-criteria",
+      "name": "Decision Criteria",
+      "description": "Understands how the client will evaluate and choose a solution",
+      "weight_percent": 16,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No questions about evaluation criteria" },
+        { "level": 2, "label": "Below Average", "description": "Assumes price is the only factor" },
+        { "level": 3, "label": "Adequate", "description": "Asks about criteria but doesn't influence them" },
+        { "level": 4, "label": "Good", "description": "Maps criteria and positions solution against each" },
+        { "level": 5, "label": "Excellent", "description": "Shapes criteria in favor of unique differentiators" }
+      ]
+    },
+    {
+      "id": "md-decision-process",
+      "name": "Decision Process",
+      "description": "Maps the buying process, timeline, and approval steps",
+      "weight_percent": 16,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No understanding of how decisions get made" },
+        { "level": 2, "label": "Below Average", "description": "Asks about timeline only" },
+        { "level": 3, "label": "Adequate", "description": "General sense of process but gaps in understanding" },
+        { "level": 4, "label": "Good", "description": "Clear process map with milestones and owners" },
+        { "level": 5, "label": "Excellent", "description": "Co-creates a mutual action plan with the client" }
+      ]
+    },
+    {
+      "id": "md-identify-pain",
+      "name": "Identify Pain",
+      "description": "Uncovers the compelling event or pain driving the evaluation",
+      "weight_percent": 16,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No pain identified, solution looking for a problem" },
+        { "level": 2, "label": "Below Average", "description": "Surface-level pain, not compelling" },
+        { "level": 3, "label": "Adequate", "description": "Real pain identified but not quantified" },
+        { "level": 4, "label": "Good", "description": "Pain quantified and tied to business impact" },
+        { "level": 5, "label": "Excellent", "description": "Compelling pain with urgency — cost of inaction is clear" }
+      ]
+    },
+    {
+      "id": "md-champion",
+      "name": "Champion",
+      "description": "Identifies and develops an internal advocate for the solution",
+      "weight_percent": 16,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No champion identified or developed" },
+        { "level": 2, "label": "Below Average", "description": "Friendly contact but not a true champion" },
+        { "level": 3, "label": "Adequate", "description": "Potential champion but hasn't been tested or coached" },
+        { "level": 4, "label": "Good", "description": "Champion identified, has influence and access" },
+        { "level": 5, "label": "Excellent", "description": "Champion is actively selling internally on your behalf" }
+      ]
+    }
+  ]
+}

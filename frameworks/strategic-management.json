@@ -1,0 +1,59 @@
+{
+  "id": "strategic-mgmt",
+  "name": "Strategic Management",
+  "description": "Evaluates strategic account planning, relationship depth, and long-term value creation.",
+  "criteria": [
+    {
+      "id": "sm-account-knowledge",
+      "name": "Account & Industry Knowledge",
+      "description": "Demonstrates deep understanding of the account's strategy, market, and competitive landscape",
+      "weight_percent": 25,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No preparation or account knowledge evident" },
+        { "level": 2, "label": "Below Average", "description": "Basic company info only" },
+        { "level": 3, "label": "Adequate", "description": "Knows industry trends but not account-specific strategy" },
+        { "level": 4, "label": "Good", "description": "References account's strategic priorities and market position" },
+        { "level": 5, "label": "Excellent", "description": "Insight-level knowledge that impresses the client" }
+      ]
+    },
+    {
+      "id": "sm-relationship",
+      "name": "Relationship Mapping & Expansion",
+      "description": "Navigates stakeholder relationships and expands influence within the account",
+      "weight_percent": 25,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "Single-threaded, no awareness of other stakeholders" },
+        { "level": 2, "label": "Below Average", "description": "Knows of others but hasn't engaged them" },
+        { "level": 3, "label": "Adequate", "description": "Multi-threaded but relationships are shallow" },
+        { "level": 4, "label": "Good", "description": "Strong multi-threaded relationships across departments" },
+        { "level": 5, "label": "Excellent", "description": "Trusted advisor status with executive sponsorship" }
+      ]
+    },
+    {
+      "id": "sm-value-creation",
+      "name": "Long-term Value Creation",
+      "description": "Positions as a strategic partner, not just a vendor",
+      "weight_percent": 25,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "Transactional approach, product-focused only" },
+        { "level": 2, "label": "Below Average", "description": "Tries to upsell without strategic context" },
+        { "level": 3, "label": "Adequate", "description": "Some strategic vision but not connected to client goals" },
+        { "level": 4, "label": "Good", "description": "Clear partnership vision aligned with client's roadmap" },
+        { "level": 5, "label": "Excellent", "description": "Co-creates strategic value that transforms the account" }
+      ]
+    },
+    {
+      "id": "sm-execution",
+      "name": "Execution & Follow-through",
+      "description": "Demonstrates reliability, follow-up discipline, and action orientation",
+      "weight_percent": 25,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No follow-up commitments or action items" },
+        { "level": 2, "label": "Below Average", "description": "Vague promises with no specifics" },
+        { "level": 3, "label": "Adequate", "description": "Action items identified but not locked down" },
+        { "level": 4, "label": "Good", "description": "Clear actions with owners, dates, and accountability" },
+        { "level": 5, "label": "Excellent", "description": "Proactive follow-through plan that builds confidence" }
+      ]
+    }
+  ]
+}
