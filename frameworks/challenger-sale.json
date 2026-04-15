@@ -1,0 +1,46 @@
+{
+  "id": "challenger-sale",
+  "name": "Challenger Sale",
+  "description": "Evaluates teaching, tailoring, and taking control of the sales conversation.",
+  "criteria": [
+    {
+      "id": "cs-teach",
+      "name": "Teach — Commercial Insight",
+      "description": "Delivers a unique insight that reframes how the client thinks about their problem",
+      "weight_percent": 35,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No insight, just product information" },
+        { "level": 2, "label": "Below Average", "description": "Shares information client already knows" },
+        { "level": 3, "label": "Adequate", "description": "Interesting data point but doesn't reframe thinking" },
+        { "level": 4, "label": "Good", "description": "Insight challenges an assumption and creates urgency" },
+        { "level": 5, "label": "Excellent", "description": "Compelling reframe that makes client rethink their approach" }
+      ]
+    },
+    {
+      "id": "cs-tailor",
+      "name": "Tailor — Message Resonance",
+      "description": "Adapts the message to the specific stakeholder's priorities and language",
+      "weight_percent": 30,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "Generic pitch, same for every audience" },
+        { "level": 2, "label": "Below Average", "description": "Minor customization, mostly boilerplate" },
+        { "level": 3, "label": "Adequate", "description": "References client's industry but not their specific role" },
+        { "level": 4, "label": "Good", "description": "Message resonates with stakeholder's personal KPIs" },
+        { "level": 5, "label": "Excellent", "description": "Perfectly tailored narrative that feels built just for them" }
+      ]
+    },
+    {
+      "id": "cs-control",
+      "name": "Take Control — Constructive Tension",
+      "description": "Pushes back respectfully, holds firm on value, drives the deal forward",
+      "weight_percent": 35,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "Caves immediately on pushback or goes silent" },
+        { "level": 2, "label": "Below Average", "description": "Accommodates every request without pushback" },
+        { "level": 3, "label": "Adequate", "description": "Holds ground but doesn't advance the conversation" },
+        { "level": 4, "label": "Good", "description": "Respectful pushback that builds credibility and momentum" },
+        { "level": 5, "label": "Excellent", "description": "Creates productive tension that accelerates the decision" }
+      ]
+    }
+  ]
+}

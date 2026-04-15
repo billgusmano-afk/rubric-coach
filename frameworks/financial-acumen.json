@@ -1,0 +1,59 @@
+{
+  "id": "financial-acumen",
+  "name": "Financial Acumen",
+  "description": "Evaluates ability to speak the language of business outcomes, ROI, and financial impact.",
+  "criteria": [
+    {
+      "id": "fa-business-context",
+      "name": "Business Context Understanding",
+      "description": "Demonstrates knowledge of client's financial situation and industry pressures",
+      "weight_percent": 20,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No awareness of client's business model or financials" },
+        { "level": 2, "label": "Below Average", "description": "Surface-level understanding only" },
+        { "level": 3, "label": "Adequate", "description": "Shows general industry knowledge" },
+        { "level": 4, "label": "Good", "description": "References specific financial metrics relevant to client" },
+        { "level": 5, "label": "Excellent", "description": "Deep understanding of P&L impact and competitive pressures" }
+      ]
+    },
+    {
+      "id": "fa-roi",
+      "name": "ROI & Value Quantification",
+      "description": "Builds a credible business case with specific numbers",
+      "weight_percent": 30,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "No attempt to quantify value" },
+        { "level": 2, "label": "Below Average", "description": "Vague claims about savings or revenue" },
+        { "level": 3, "label": "Adequate", "description": "General ROI framework but no client-specific numbers" },
+        { "level": 4, "label": "Good", "description": "Specific ROI calculation tied to client's metrics" },
+        { "level": 5, "label": "Excellent", "description": "Compelling multi-year business case with payback period" }
+      ]
+    },
+    {
+      "id": "fa-tco",
+      "name": "Total Cost of Ownership",
+      "description": "Addresses implementation costs, hidden costs, and long-term value",
+      "weight_percent": 25,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "Avoids or ignores cost discussions" },
+        { "level": 2, "label": "Below Average", "description": "Only discusses license price" },
+        { "level": 3, "label": "Adequate", "description": "Mentions implementation but minimizes costs" },
+        { "level": 4, "label": "Good", "description": "Transparent TCO discussion with mitigation strategies" },
+        { "level": 5, "label": "Excellent", "description": "Proactively builds TCO model showing long-term advantage" }
+      ]
+    },
+    {
+      "id": "fa-stakeholder",
+      "name": "CFO / Finance Stakeholder Language",
+      "description": "Speaks in terms finance leaders understand and care about",
+      "weight_percent": 25,
+      "levels": [
+        { "level": 1, "label": "Poor", "description": "Only uses technical or product language" },
+        { "level": 2, "label": "Below Average", "description": "Occasional financial terms but out of context" },
+        { "level": 3, "label": "Adequate", "description": "Uses financial language but doesn't fully connect" },
+        { "level": 4, "label": "Good", "description": "Fluent in financial language, ties to margin and growth" },
+        { "level": 5, "label": "Excellent", "description": "Speaks like a business partner, not a vendor" }
+      ]
+    }
+  ]
+}

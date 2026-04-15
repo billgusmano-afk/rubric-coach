@@ -1,0 +1,33 @@
+{
+  "id": "my-framework-id",
+  "name": "My Framework Name",
+  "description": "Short description of what this rubric evaluates.",
+  "criteria": [
+    {
+      "id": "mf-criterion-1",
+      "name": "First Criterion Name",
+      "description": "What this criterion measures in one sentence.",
+      "weight_percent": 50,
+      "levels": [
+        { "level": 1, "label": "Poor",          "description": "What a Poor performance looks like." },
+        { "level": 2, "label": "Below Average", "description": "What a Below Average performance looks like." },
+        { "level": 3, "label": "Adequate",      "description": "What an Adequate performance looks like." },
+        { "level": 4, "label": "Good",          "description": "What a Good performance looks like." },
+        { "level": 5, "label": "Excellent",     "description": "What an Excellent performance looks like." }
+      ]
+    },
+    {
+      "id": "mf-criterion-2",
+      "name": "Second Criterion Name",
+      "description": "What this criterion measures in one sentence.",
+      "weight_percent": 50,
+      "levels": [
+        { "level": 1, "label": "Poor",          "description": "..." },
+        { "level": 2, "label": "Below Average", "description": "..." },
+        { "level": 3, "label": "Adequate",      "description": "..." },
+        { "level": 4, "label": "Good",          "description": "..." },
+        { "level": 5, "label": "Excellent",     "description": "..." }
+      ]
+    }
+  ]
+}
