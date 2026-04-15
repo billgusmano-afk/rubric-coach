@@ -17,6 +17,16 @@ interface CriterionScore {
   feedback: string;
 }
 
+interface CompanyResearch {
+  company_name: string;
+  revenue: string;
+  industry: string;
+  business_model: string;
+  key_contacts: string;
+  pain_points: string;
+  recent_news: string;
+}
+
 interface SessionData {
   session_id: string;
   system_prompt: string;
@@ -27,6 +37,16 @@ interface SessionData {
   framework_ids: string[];
   voice_enabled: boolean;
   mic_enabled: boolean;
+  // Briefing context (optional — present for sessions launched from setup)
+  company_research?: CompanyResearch | null;
+  partner_name?: string;
+  partner_role?: string;
+  partner_solution?: string;
+  relationship_stage?: string;
+  proposal?: string;
+  objective?: string;
+  expected_objection?: string;
+  disc_blend?: string;
 }
 
 /* ───────────────────── Speech Recognition Hook ───────────────────── */
@@ -99,6 +119,9 @@ export default function SessionPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Briefing panel expand/collapse
+  const [briefingOpen, setBriefingOpen] = useState(true);
+
   // Speech recognition
   const handleSpeechResult = useCallback((text: string) => {
     setUserMsg((prev) => (prev ? prev + " " + text : text));
@@ -114,12 +137,8 @@ export default function SessionPage() {
         setSessionData(data);
         setMessages([{ role: "assistant", content: data.opening_message }]);
 
-        // Play opening message if voice enabled (slight delay for page to settle)
-        if (data.voice_enabled) {
-          setTimeout(() => {
-            playTTS(data.opening_message, data.disc_profile);
-          }, 600);
-        }
+        // Voice will play when user clicks "Begin Session" button
+        // (Chrome requires a user gesture before playing audio)
       } else {
         // No session data found — redirect back
         router.push("/dashboard/roleplay");
@@ -153,6 +172,7 @@ export default function SessionPage() {
 
   // Voice status & selected voice
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
+  const [sessionStarted, setSessionStarted] = useState(false);
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   // Load voices — prefer Samantha/Victoria/Karen for a natural female CFO voice
@@ -173,7 +193,7 @@ export default function SessionPage() {
         }
       }
 
-      // Fallback: any English female-sounding voice, or first English voice
+      // Fallback: any English voice
       const englishVoice = voices.find((v) => v.lang.startsWith("en"));
       if (englishVoice) {
         selectedVoiceRef.current = englishVoice;
@@ -181,13 +201,12 @@ export default function SessionPage() {
     }
 
     loadVoices();
-    // Voices may load async — listen for the event
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
   }, []);
 
-  // Speak text using browser speech synthesis
+  // Speak text using browser speech synthesis (direct, no ElevenLabs)
   function speak(text: string) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setVoiceStatus("error");
@@ -211,43 +230,14 @@ export default function SessionPage() {
     window.speechSynthesis.speak(utterance);
   }
 
-  // ElevenLabs TTS with browser speech fallback
-  async function playTTS(text: string, discProfile: string) {
-    setVoiceStatus("loading");
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, disc_profile: discProfile }),
-      });
-
-      const contentType = res.headers.get("content-type") || "";
-
-      if (res.ok && contentType.includes("audio")) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onplay = () => setVoiceStatus("playing");
-        audio.onended = () => setVoiceStatus("idle");
-        audio.onerror = () => {
-          // Fallback to browser speech
-          speak(text);
-        };
-        audio.play().catch(() => {
-          // Fallback to browser speech
-          speak(text);
-        });
-      } else {
-        // Fallback to browser speech synthesis
-        speak(text);
-      }
-    } catch {
-      // Fallback to browser speech synthesis
-      speak(text);
+  // Begin session — triggered by user click (needed for Chrome audio policy)
+  function handleBeginSession() {
+    setSessionStarted(true);
+    if (sessionData?.voice_enabled && messages.length > 0) {
+      // Small delay then speak the opening message
+      setTimeout(() => {
+        speak(messages[0].content);
+      }, 300);
     }
   }
 
@@ -278,9 +268,9 @@ export default function SessionPage() {
         if (data.scores) setCriteriaScores(data.scores);
         if (data.nudge) setNudges((prev) => [data.nudge, ...prev].slice(0, 5));
 
-        // Play AI response
+        // Speak AI response using browser speech synthesis
         if (sessionData.voice_enabled) {
-          playTTS(data.ai_response, sessionData.disc_profile);
+          speak(data.ai_response);
         }
       }
     } catch {
@@ -340,10 +330,234 @@ export default function SessionPage() {
   if (!sessionData) return null;
 
   /* ═══════════════════════════════════════════════════════
-     RENDER
+     RENDER: "Begin Session" gate (user gesture needed for audio)
      ═══════════════════════════════════════════════════════ */
+  if (!sessionStarted) {
+    return (
+      <div className="p-8 flex flex-col items-center min-h-[500px] max-w-[640px] mx-auto text-center">
+        <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6">
+          <span className="text-3xl">🎙</span>
+        </div>
+        <h1 className="font-serif text-[24px] text-ink mb-2">Ready to begin</h1>
+        <p className="text-sm text-ink-3 mb-2">
+          {sessionData.company_name} · {sessionData.meeting_type}
+        </p>
+        <p className="text-xs text-ink-3 mb-6">
+          {sessionData.voice_enabled
+            ? "The AI client will speak out loud. Make sure your volume is on."
+            : "Text-only mode — the AI client will respond in chat."}
+        </p>
+
+        {/* Pre-session briefing summary */}
+        {(sessionData.company_research || sessionData.proposal || sessionData.objective) && (
+          <div className="w-full bg-card border border-border rounded-[12px] shadow-card p-5 mb-6 text-left">
+            <div className="font-semibold text-xs text-ink-3 uppercase tracking-wide mb-3">
+              Your briefing
+            </div>
+            <div className="space-y-2 text-xs text-ink-2 leading-relaxed">
+              {sessionData.company_research?.pain_points && (
+                <div>
+                  <span className="font-semibold text-ink-3">Customer pain points: </span>
+                  {sessionData.company_research.pain_points}
+                </div>
+              )}
+              {sessionData.partner_name && (
+                <div>
+                  <span className="font-semibold text-ink-3">Partner: </span>
+                  {sessionData.partner_name}
+                  {sessionData.partner_role ? ` (${sessionData.partner_role})` : ""}
+                  {sessionData.partner_solution ? ` — ${sessionData.partner_solution}` : ""}
+                </div>
+              )}
+              {sessionData.proposal && (
+                <div>
+                  <span className="font-semibold text-ink-3">Proposing: </span>
+                  {sessionData.proposal}
+                </div>
+              )}
+              {sessionData.objective && (
+                <div>
+                  <span className="font-semibold text-ink-3">Your goal: </span>
+                  {sessionData.objective}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={handleBeginSession}
+          className="px-8 py-3 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors shadow-card"
+        >
+          ▶ Begin Session
+        </button>
+      </div>
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     RENDER: Live session
+     ═══════════════════════════════════════════════════════ */
+  const hasBriefing =
+    !!sessionData.company_research ||
+    !!sessionData.partner_name ||
+    !!sessionData.partner_solution ||
+    !!sessionData.proposal ||
+    !!sessionData.objective ||
+    !!sessionData.expected_objection;
+
   return (
     <div className="p-8 max-w-[1100px]">
+      {/* ── Briefing panel (context: customer research, partner, scenario) ── */}
+      {hasBriefing && (
+        <div className="mb-4 bg-card border border-border rounded-[12px] shadow-card">
+          <button
+            onClick={() => setBriefingOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-surface/50 transition-colors rounded-t-[12px]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-sm text-ink">Session Briefing</span>
+              <span className="text-[11px] text-ink-3">
+                Customer research, partner, and scenario context
+              </span>
+            </div>
+            <span className="text-ink-3 text-xs">{briefingOpen ? "▾ Hide" : "▸ Show"}</span>
+          </button>
+
+          {briefingOpen && (
+            <div className="px-5 pb-5 pt-1 grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-border">
+              {/* Customer Research */}
+              {sessionData.company_research && (
+                <div className="bg-surface/60 rounded-sm p-4 border border-border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-accent to-[#7b6dfa] rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0">
+                      {sessionData.company_research.company_name?.substring(0, 2).toUpperCase() || "CO"}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm text-ink">
+                        {sessionData.company_research.company_name}
+                      </div>
+                      <div className="text-[11px] text-ink-3">Customer research</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {sessionData.company_research.revenue && (
+                      <span className="inline-flex px-2 py-0.5 bg-white text-ink-3 text-[10px] font-semibold rounded-full border border-border">
+                        {sessionData.company_research.revenue}
+                      </span>
+                    )}
+                    {sessionData.company_research.industry && (
+                      <span className="inline-flex px-2 py-0.5 bg-white text-ink-3 text-[10px] font-semibold rounded-full border border-border">
+                        {sessionData.company_research.industry}
+                      </span>
+                    )}
+                    {sessionData.company_research.business_model && (
+                      <span className="inline-flex px-2 py-0.5 bg-white text-ink-3 text-[10px] font-semibold rounded-full border border-border">
+                        {sessionData.company_research.business_model}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2 text-xs text-ink-2 leading-relaxed">
+                    {sessionData.company_research.key_contacts && (
+                      <div>
+                        <span className="font-semibold text-ink-3">Key contacts: </span>
+                        {sessionData.company_research.key_contacts}
+                      </div>
+                    )}
+                    {sessionData.company_research.pain_points && (
+                      <div>
+                        <span className="font-semibold text-ink-3">Pain points: </span>
+                        {sessionData.company_research.pain_points}
+                      </div>
+                    )}
+                    {sessionData.company_research.recent_news && (
+                      <div>
+                        <span className="font-semibold text-ink-3">Recent news: </span>
+                        {sessionData.company_research.recent_news}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Partner + Scenario */}
+              <div className="flex flex-col gap-3">
+                {(sessionData.partner_name || sessionData.partner_role || sessionData.partner_solution) && (
+                  <div className="bg-surface/60 rounded-sm p-4 border border-border">
+                    <div className="font-semibold text-xs text-ink-3 mb-2 uppercase tracking-wide">
+                      Partner
+                    </div>
+                    <div className="space-y-1 text-xs text-ink-2">
+                      {sessionData.partner_name && (
+                        <div>
+                          <span className="font-semibold text-ink">{sessionData.partner_name}</span>
+                          {sessionData.partner_role && (
+                            <span className="text-ink-3"> · {sessionData.partner_role}</span>
+                          )}
+                        </div>
+                      )}
+                      {sessionData.partner_solution && (
+                        <div className="text-ink-3 leading-relaxed">
+                          {sessionData.partner_solution}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(sessionData.proposal || sessionData.objective || sessionData.expected_objection ||
+                  sessionData.relationship_stage) && (
+                  <div className="bg-surface/60 rounded-sm p-4 border border-border">
+                    <div className="font-semibold text-xs text-ink-3 mb-2 uppercase tracking-wide">
+                      Scenario
+                    </div>
+                    <div className="space-y-2 text-xs text-ink-2 leading-relaxed">
+                      {sessionData.relationship_stage && (
+                        <div>
+                          <span className="font-semibold text-ink-3">Stage: </span>
+                          {sessionData.relationship_stage}
+                        </div>
+                      )}
+                      {sessionData.proposal && (
+                        <div>
+                          <span className="font-semibold text-ink-3">Proposing: </span>
+                          {sessionData.proposal}
+                        </div>
+                      )}
+                      {sessionData.objective && (
+                        <div>
+                          <span className="font-semibold text-ink-3">Your goal: </span>
+                          {sessionData.objective}
+                        </div>
+                      )}
+                      {sessionData.expected_objection && (
+                        <div>
+                          <span className="font-semibold text-ink-3">Expected objection: </span>
+                          {sessionData.expected_objection}
+                        </div>
+                      )}
+                      <div className="pt-1 flex flex-wrap gap-1.5">
+                        <span className="inline-flex px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-semibold rounded-full">
+                          DISC: {sessionData.disc_profile}
+                          {sessionData.disc_blend && sessionData.disc_blend !== "single"
+                            ? ` (${sessionData.disc_blend})`
+                            : ""}
+                        </span>
+                        {sessionData.meeting_type && (
+                          <span className="inline-flex px-2 py-0.5 bg-surface text-ink-3 text-[10px] font-semibold rounded-full border border-border">
+                            {sessionData.meeting_type}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-[1fr_340px] gap-5">
         {/* ── Chat area ── */}
         <div>

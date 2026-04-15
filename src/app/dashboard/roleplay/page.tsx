@@ -103,44 +103,86 @@ function SectionWrapper({
   );
 }
 
+/* ───────────────────── Persistence ───────────────────── */
+
+const STORAGE_KEY = "rubriccoach_roleplay_setup_v1";
+
+interface PersistedSetup {
+  companyInput: string;
+  research: CompanyResearch | null;
+  partnerName: string;
+  partnerRole: string;
+  partnerSolution: string;
+  relationshipStage: string;
+  meetingType: string;
+  proposal: string;
+  objective: string;
+  expectedObjection: string;
+  discProfile: string;
+  discBlend: string;
+  selectedFrameworkIds: string[];
+  docSummary: string;
+  docPageCount: number | null;
+  docFileName: string;
+  docContext: string;
+  voiceEnabled: boolean;
+  micEnabled: boolean;
+}
+
+function loadPersisted(): Partial<PersistedSetup> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as PersistedSetup;
+  } catch {
+    return {};
+  }
+}
+
 /* ───────────────────── Main Component ───────────────────── */
 
 export default function RoleplayPage() {
   const router = useRouter();
 
+  // Load persisted state once on mount
+  const persisted = typeof window !== "undefined" ? loadPersisted() : {};
+
   /* ── Section 1: Client & Partner ── */
-  const [companyInput, setCompanyInput] = useState("");
-  const [research, setResearch] = useState<CompanyResearch | null>(null);
+  const [companyInput, setCompanyInput] = useState(persisted.companyInput ?? "");
+  const [research, setResearch] = useState<CompanyResearch | null>(persisted.research ?? null);
   const [researching, setResearching] = useState(false);
-  const [partnerName, setPartnerName] = useState("");
-  const [partnerRole, setPartnerRole] = useState<string>("");
-  const [partnerSolution, setPartnerSolution] = useState("");
+  const [partnerName, setPartnerName] = useState(persisted.partnerName ?? "");
+  const [partnerRole, setPartnerRole] = useState<string>(persisted.partnerRole ?? "");
+  const [partnerSolution, setPartnerSolution] = useState(persisted.partnerSolution ?? "");
 
   /* ── Section 2: Scenario ── */
-  const [relationshipStage, setRelationshipStage] = useState<string>("");
-  const [meetingType, setMeetingType] = useState<string>("");
-  const [proposal, setProposal] = useState("");
-  const [objective, setObjective] = useState("");
-  const [expectedObjection, setExpectedObjection] = useState("");
+  const [relationshipStage, setRelationshipStage] = useState<string>(persisted.relationshipStage ?? "");
+  const [meetingType, setMeetingType] = useState<string>(persisted.meetingType ?? "");
+  const [proposal, setProposal] = useState(persisted.proposal ?? "");
+  const [objective, setObjective] = useState(persisted.objective ?? "");
+  const [expectedObjection, setExpectedObjection] = useState(persisted.expectedObjection ?? "");
 
   /* ── Section 3: DISC ── */
-  const [discProfile, setDiscProfile] = useState("D");
-  const [discBlend, setDiscBlend] = useState("single");
+  const [discProfile, setDiscProfile] = useState(persisted.discProfile ?? "D");
+  const [discBlend, setDiscBlend] = useState(persisted.discBlend ?? "single");
 
   /* ── Section 4: Frameworks ── */
   const [dbFrameworks, setDbFrameworks] = useState<Framework[]>([]);
-  const [selectedFrameworkIds, setSelectedFrameworkIds] = useState<string[]>(["human-edge"]);
+  const [selectedFrameworkIds, setSelectedFrameworkIds] = useState<string[]>(
+    persisted.selectedFrameworkIds ?? ["human-edge"]
+  );
 
   /* ── Section 5: Document ── */
   const [docParsing, setDocParsing] = useState(false);
-  const [docSummary, setDocSummary] = useState("");
-  const [docPageCount, setDocPageCount] = useState<number | null>(null);
-  const [docFileName, setDocFileName] = useState("");
-  const [docContext, setDocContext] = useState("");
+  const [docSummary, setDocSummary] = useState(persisted.docSummary ?? "");
+  const [docPageCount, setDocPageCount] = useState<number | null>(persisted.docPageCount ?? null);
+  const [docFileName, setDocFileName] = useState(persisted.docFileName ?? "");
+  const [docContext, setDocContext] = useState(persisted.docContext ?? "");
 
   /* ── Section 6: Voice ── */
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [micEnabled, setMicEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(persisted.voiceEnabled ?? true);
+  const [micEnabled, setMicEnabled] = useState(persisted.micEnabled ?? false);
 
   /* ── Launch ── */
   const [starting, setStarting] = useState(false);
@@ -172,6 +214,67 @@ export default function RoleplayPage() {
     }
     loadFrameworks();
   }, []);
+
+  /* ── Auto-save setup to localStorage on every change ── */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload: PersistedSetup = {
+      companyInput,
+      research,
+      partnerName,
+      partnerRole,
+      partnerSolution,
+      relationshipStage,
+      meetingType,
+      proposal,
+      objective,
+      expectedObjection,
+      discProfile,
+      discBlend,
+      selectedFrameworkIds,
+      docSummary,
+      docPageCount,
+      docFileName,
+      docContext,
+      voiceEnabled,
+      micEnabled,
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [
+    companyInput, research, partnerName, partnerRole, partnerSolution,
+    relationshipStage, meetingType, proposal, objective, expectedObjection,
+    discProfile, discBlend, selectedFrameworkIds,
+    docSummary, docPageCount, docFileName, docContext,
+    voiceEnabled, micEnabled,
+  ]);
+
+  function clearSetup() {
+    if (!confirm("Clear all setup fields? This cannot be undone.")) return;
+    if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
+    setCompanyInput("");
+    setResearch(null);
+    setPartnerName("");
+    setPartnerRole("");
+    setPartnerSolution("");
+    setRelationshipStage("");
+    setMeetingType("");
+    setProposal("");
+    setObjective("");
+    setExpectedObjection("");
+    setDiscProfile("D");
+    setDiscBlend("single");
+    setSelectedFrameworkIds(["human-edge"]);
+    setDocSummary("");
+    setDocPageCount(null);
+    setDocFileName("");
+    setDocContext("");
+    setVoiceEnabled(true);
+    setMicEnabled(false);
+  }
 
   /* ── Research client ── */
   async function researchClient() {
@@ -297,6 +400,16 @@ export default function RoleplayPage() {
           framework_ids: selectedFrameworkIds,
           voice_enabled: voiceEnabled,
           mic_enabled: micEnabled,
+          // Context for in-session briefing panel
+          company_research: research,
+          partner_name: partnerName,
+          partner_role: partnerRole,
+          partner_solution: partnerSolution,
+          relationship_stage: relationshipStage,
+          proposal,
+          objective,
+          expected_objection: expectedObjection,
+          disc_blend: discBlend,
         })
       );
 
@@ -313,9 +426,19 @@ export default function RoleplayPage() {
      ═══════════════════════════════════════════════════════ */
   return (
     <div className="p-8 max-w-[860px] pb-32">
-      <div className="mb-7">
-        <h1 className="font-serif text-[26px] text-ink">Session Setup</h1>
-        <p className="text-ink-3 text-sm">Configure your roleplay scenario, then launch</p>
+      <div className="mb-7 flex items-start justify-between">
+        <div>
+          <h1 className="font-serif text-[26px] text-ink">Session Setup</h1>
+          <p className="text-ink-3 text-sm">
+            Configure your roleplay scenario, then launch. Your progress is saved automatically.
+          </p>
+        </div>
+        <button
+          onClick={clearSetup}
+          className="px-3 py-1.5 text-xs font-medium text-ink-3 border border-border rounded-sm hover:border-red hover:text-red transition-colors"
+        >
+          Clear setup
+        </button>
       </div>
 
       <div className="flex flex-col gap-5">
