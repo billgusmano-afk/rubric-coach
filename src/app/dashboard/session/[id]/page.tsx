@@ -178,15 +178,24 @@ export default function SessionPage() {
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
-    // Stop any currently playing audio
+    // Stop any currently playing audio — detach handlers FIRST so the old
+    // element can't fire a stray `error` event into state when we clear its src.
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
+      const old = audioRef.current;
+      old.onplay = null;
+      old.onended = null;
+      old.onerror = null;
+      old.pause();
+      old.removeAttribute("src");
+      old.load();
+      audioRef.current = null;
     }
 
     setVoiceStatus("loading");
+
+    let res: Response;
     try {
-      const res = await fetch("/api/tts", {
+      res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -194,30 +203,56 @@ export default function SessionPage() {
           disc_profile: sessionData.disc_profile || "D",
         }),
       });
-
-      if (!res.ok) {
-        setVoiceStatus("error");
-        return;
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
-
-      audio.onplay = () => setVoiceStatus("playing");
-      audio.onended = () => {
-        setVoiceStatus("idle");
-        URL.revokeObjectURL(url);
-      };
-      audio.onerror = () => {
-        setVoiceStatus("error");
-        URL.revokeObjectURL(url);
-      };
-
-      await audio.play();
     } catch {
       setVoiceStatus("error");
+      return;
+    }
+
+    if (!res.ok) {
+      setVoiceStatus("error");
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audioRef.current = audio;
+
+    // Track whether playback has ever started — used to suppress spurious
+    // `error` events that some browsers fire during blob-URL decode even
+    // though playback then proceeds fine.
+    let started = false;
+    let settled = false;
+
+    audio.onplay = () => {
+      started = true;
+      settled = true;
+      setVoiceStatus("playing");
+    };
+    audio.onended = () => {
+      settled = true;
+      setVoiceStatus("idle");
+      URL.revokeObjectURL(url);
+    };
+    audio.onerror = () => {
+      // Only surface an error if we *never* managed to play. Spurious
+      // mid-load error events are ignored once onplay has fired.
+      if (!started) {
+        settled = true;
+        setVoiceStatus("error");
+      }
+      URL.revokeObjectURL(url);
+    };
+
+    try {
+      await audio.play();
+    } catch {
+      // play() can reject with AbortError/NotAllowedError in some browsers
+      // even when playback then proceeds. Give the element a moment to
+      // actually start before surfacing this as a user-visible error.
+      setTimeout(() => {
+        if (!started && !settled) setVoiceStatus("error");
+      }, 1500);
     }
   }
 
