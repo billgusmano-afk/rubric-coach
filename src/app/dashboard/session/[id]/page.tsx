@@ -3,79 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-/* ───────────────────── Avatar helpers ───────────────────── */
-
-/**
- * Build a deterministic DiceBear avatar URL for the customer.
- * Same seed always yields the same avatar — picking key_contact first
- * (most specific) and falling back to company_name keeps the avatar
- * stable across a session.
- */
-function customerAvatarUrl(seed: string): string {
-  const cleanSeed = encodeURIComponent(seed || "customer");
-  return `https://api.dicebear.com/7.x/notionists/svg?seed=${cleanSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&radius=50`;
-}
-
-/** Fallback avatar URL (ui-avatars.com generates initials on a pastel bg) */
-function fallbackAvatarUrl(displayName: string): string {
-  const name = encodeURIComponent(displayName || "Customer");
-  return `https://ui-avatars.com/api/?name=${name}&background=c0aede&color=ffffff&bold=true&size=128`;
-}
-
-/** Deterministic pastel color for initials fallback circle */
-function pastelFromSeed(seed: string): string {
-  const colors = ["#b6e3f4", "#c0aede", "#d1d4f9", "#ffd5dc", "#ffdfbf"];
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  return colors[Math.abs(h) % colors.length];
-}
-
-/** Initials from a display name (e.g. "Jane Smith" → "JS") */
-function initialsOf(name: string): string {
-  const parts = (name || "Customer").trim().split(/\s+/).slice(0, 2);
-  return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "C";
-}
-
-/**
- * Graceful avatar: tries DiceBear → ui-avatars.com → CSS initials circle.
- * Local to this file so the session page doesn't break if both CDNs are blocked.
- */
-function CustomerAvatar({
-  seed,
-  displayName,
-  className,
-}: {
-  seed: string;
-  displayName: string;
-  className?: string;
-}) {
-  // 0 = dicebear, 1 = ui-avatars, 2 = initials fallback
-  const [stage, setStage] = useState<0 | 1 | 2>(0);
-
-  if (stage === 2) {
-    return (
-      <div
-        className={`flex items-center justify-center text-xs font-bold text-white shrink-0 ${className ?? ""}`}
-        style={{ backgroundColor: pastelFromSeed(seed || displayName || "customer") }}
-        aria-label={`${displayName} avatar`}
-      >
-        {initialsOf(displayName)}
-      </div>
-    );
-  }
-
-  const src = stage === 0 ? customerAvatarUrl(seed) : fallbackAvatarUrl(displayName);
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={`${displayName} avatar`}
-      className={className}
-      onError={() => setStage((s) => (s === 0 ? 1 : 2))}
-    />
-  );
-}
-
 /* ───────────────────── Types ───────────────────── */
 
 interface ChatMessage {
@@ -243,64 +170,55 @@ export default function SessionPage() {
     return `${m}:${s}`;
   }
 
-  // Voice status & selected voice
+  // Voice status
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const [sessionStarted, setSessionStarted] = useState(false);
-  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
-  // Load voices — prefer Samantha/Victoria/Karen for a natural female CFO voice
-  useEffect(() => {
-    function loadVoices() {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  // Speak text using ElevenLabs TTS (DISC-matched voice, male for D/S profiles)
+  async function speak(text: string) {
+    if (!sessionData || typeof window === "undefined") return;
 
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) return;
-
-      // Preferred voices in order of priority
-      const preferred = ["Samantha", "Victoria", "Karen", "Zira", "Google US English"];
-      for (const name of preferred) {
-        const match = voices.find((v) => v.name.includes(name) && v.lang.startsWith("en"));
-        if (match) {
-          selectedVoiceRef.current = match;
-          return;
-        }
-      }
-
-      // Fallback: any English voice
-      const englishVoice = voices.find((v) => v.lang.startsWith("en"));
-      if (englishVoice) {
-        selectedVoiceRef.current = englishVoice;
-      }
+    // Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
     }
-
-    loadVoices();
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-  }, []);
-
-  // Speak text using browser speech synthesis (direct, no ElevenLabs)
-  function speak(text: string) {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setVoiceStatus("error");
-      return;
-    }
-
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (selectedVoiceRef.current) {
-      utterance.voice = selectedVoiceRef.current;
-    }
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-    utterance.onstart = () => setVoiceStatus("playing");
-    utterance.onend = () => setVoiceStatus("idle");
-    utterance.onerror = () => setVoiceStatus("error");
 
     setVoiceStatus("loading");
-    window.speechSynthesis.speak(utterance);
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          disc_profile: sessionData.disc_profile || "D",
+        }),
+      });
+
+      if (!res.ok) {
+        setVoiceStatus("error");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onplay = () => setVoiceStatus("playing");
+      audio.onended = () => {
+        setVoiceStatus("idle");
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = () => {
+        setVoiceStatus("error");
+        URL.revokeObjectURL(url);
+      };
+
+      await audio.play();
+    } catch {
+      setVoiceStatus("error");
+    }
   }
 
   // Begin session — triggered by user click (needed for Chrome audio policy)
@@ -402,12 +320,6 @@ export default function SessionPage() {
 
   if (!sessionData) return null;
 
-  /* ── Customer avatar (deterministic from contact/company) ── */
-  const avatarSeed =
-    sessionData.company_research?.key_contacts?.split(",")[0]?.trim() ||
-    sessionData.company_research?.company_name ||
-    sessionData.company_name ||
-    "customer";
   const customerDisplayName =
     sessionData.company_research?.key_contacts?.split(",")[0]?.trim() ||
     sessionData.company_name ||
@@ -419,11 +331,6 @@ export default function SessionPage() {
   if (!sessionStarted) {
     return (
       <div className="p-8 flex flex-col items-center min-h-[500px] max-w-[640px] mx-auto text-center">
-        <CustomerAvatar
-          seed={avatarSeed}
-          displayName={customerDisplayName}
-          className="w-20 h-20 rounded-full mb-4 border-2 border-border shadow-card bg-white text-xl"
-        />
         <div className="text-xs text-ink-3 mb-3 uppercase tracking-wide">You&apos;re meeting with</div>
         <div className="font-semibold text-sm text-ink mb-5">{customerDisplayName}</div>
         <h1 className="font-serif text-[24px] text-ink mb-2">Ready to begin</h1>
@@ -518,11 +425,6 @@ export default function SessionPage() {
               {sessionData.company_research && (
                 <div className="bg-surface/60 rounded-sm p-4 border border-border">
                   <div className="flex items-center gap-3 mb-3">
-                    <CustomerAvatar
-                      seed={avatarSeed}
-                      displayName={customerDisplayName}
-                      className="w-10 h-10 rounded-full shrink-0 border border-border bg-white"
-                    />
                     <div>
                       <div className="font-semibold text-sm text-ink">
                         {sessionData.company_research.company_name}
@@ -698,11 +600,9 @@ export default function SessionPage() {
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                 {msg.role === "assistant" ? (
-                  <CustomerAvatar
-                    seed={avatarSeed}
-                    displayName={customerDisplayName}
-                    className="w-8 h-8 rounded-full shrink-0 border border-border bg-white"
-                  />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-ink text-white">
+                    AI
+                  </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-accent text-white">
                     You
@@ -721,11 +621,9 @@ export default function SessionPage() {
             ))}
             {sending && (
               <div className="flex gap-2.5">
-                <CustomerAvatar
-                  seed={avatarSeed}
-                  displayName={customerDisplayName}
-                  className="w-8 h-8 rounded-full shrink-0 border border-border bg-white"
-                />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-ink text-white">
+                  AI
+                </div>
                 <div className="px-3.5 py-2.5 bg-white border border-border rounded-[12px]">
                   <div className="flex gap-1">
                     <span className="w-1.5 h-1.5 bg-ink-3 rounded-full animate-pulse" />
