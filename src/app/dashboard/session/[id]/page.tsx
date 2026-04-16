@@ -170,64 +170,90 @@ export default function SessionPage() {
     return `${m}:${s}`;
   }
 
-  // Voice status & selected voice
+  // Voice status
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const [sessionStarted, setSessionStarted] = useState(false);
-  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
-  // Load voices — prefer Samantha/Victoria/Karen for a natural female CFO voice
-  useEffect(() => {
-    function loadVoices() {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  // Speak text using ElevenLabs TTS (DISC-matched voice, male for D/S profiles)
+  async function speak(text: string) {
+    if (!sessionData || typeof window === "undefined") return;
 
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) return;
-
-      // Preferred voices in order of priority
-      const preferred = ["Samantha", "Victoria", "Karen", "Zira", "Google US English"];
-      for (const name of preferred) {
-        const match = voices.find((v) => v.name.includes(name) && v.lang.startsWith("en"));
-        if (match) {
-          selectedVoiceRef.current = match;
-          return;
-        }
-      }
-
-      // Fallback: any English voice
-      const englishVoice = voices.find((v) => v.lang.startsWith("en"));
-      if (englishVoice) {
-        selectedVoiceRef.current = englishVoice;
-      }
+    // Stop any currently playing audio — detach handlers FIRST so the old
+    // element can't fire a stray `error` event into state when we clear its src.
+    if (audioRef.current) {
+      const old = audioRef.current;
+      old.onplay = null;
+      old.onended = null;
+      old.onerror = null;
+      old.pause();
+      old.removeAttribute("src");
+      old.load();
+      audioRef.current = null;
     }
 
-    loadVoices();
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-  }, []);
+    setVoiceStatus("loading");
 
-  // Speak text using browser speech synthesis (direct, no ElevenLabs)
-  function speak(text: string) {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    let res: Response;
+    try {
+      res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          disc_profile: sessionData.disc_profile || "D",
+        }),
+      });
+    } catch {
       setVoiceStatus("error");
       return;
     }
 
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (selectedVoiceRef.current) {
-      utterance.voice = selectedVoiceRef.current;
+    if (!res.ok) {
+      setVoiceStatus("error");
+      return;
     }
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-    utterance.onstart = () => setVoiceStatus("playing");
-    utterance.onend = () => setVoiceStatus("idle");
-    utterance.onerror = () => setVoiceStatus("error");
 
-    setVoiceStatus("loading");
-    window.speechSynthesis.speak(utterance);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audioRef.current = audio;
+
+    // Track whether playback has ever started — used to suppress spurious
+    // `error` events that some browsers fire during blob-URL decode even
+    // though playback then proceeds fine.
+    let started = false;
+    let settled = false;
+
+    audio.onplay = () => {
+      started = true;
+      settled = true;
+      setVoiceStatus("playing");
+    };
+    audio.onended = () => {
+      settled = true;
+      setVoiceStatus("idle");
+      URL.revokeObjectURL(url);
+    };
+    audio.onerror = () => {
+      // Only surface an error if we *never* managed to play. Spurious
+      // mid-load error events are ignored once onplay has fired.
+      if (!started) {
+        settled = true;
+        setVoiceStatus("error");
+      }
+      URL.revokeObjectURL(url);
+    };
+
+    try {
+      await audio.play();
+    } catch {
+      // play() can reject with AbortError/NotAllowedError in some browsers
+      // even when playback then proceeds. Give the element a moment to
+      // actually start before surfacing this as a user-visible error.
+      setTimeout(() => {
+        if (!started && !settled) setVoiceStatus("error");
+      }, 1500);
+    }
   }
 
   // Begin session — triggered by user click (needed for Chrome audio policy)
@@ -329,15 +355,19 @@ export default function SessionPage() {
 
   if (!sessionData) return null;
 
+  const customerDisplayName =
+    sessionData.company_research?.key_contacts?.split(",")[0]?.trim() ||
+    sessionData.company_name ||
+    "Customer";
+
   /* ═══════════════════════════════════════════════════════
      RENDER: "Begin Session" gate (user gesture needed for audio)
      ═══════════════════════════════════════════════════════ */
   if (!sessionStarted) {
     return (
       <div className="p-8 flex flex-col items-center min-h-[500px] max-w-[640px] mx-auto text-center">
-        <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6">
-          <span className="text-3xl">🎙</span>
-        </div>
+        <div className="text-xs text-ink-3 mb-3 uppercase tracking-wide">You&apos;re meeting with</div>
+        <div className="font-semibold text-sm text-ink mb-5">{customerDisplayName}</div>
         <h1 className="font-serif text-[24px] text-ink mb-2">Ready to begin</h1>
         <p className="text-sm text-ink-3 mb-2">
           {sessionData.company_name} · {sessionData.meeting_type}
@@ -430,9 +460,6 @@ export default function SessionPage() {
               {sessionData.company_research && (
                 <div className="bg-surface/60 rounded-sm p-4 border border-border">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-accent to-[#7b6dfa] rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0">
-                      {sessionData.company_research.company_name?.substring(0, 2).toUpperCase() || "CO"}
-                    </div>
                     <div>
                       <div className="font-semibold text-sm text-ink">
                         {sessionData.company_research.company_name}
@@ -607,13 +634,15 @@ export default function SessionPage() {
           >
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    msg.role === "assistant" ? "bg-accent/10 text-accent" : "bg-accent text-white"
-                  }`}
-                >
-                  {msg.role === "assistant" ? "AI" : "You"}
-                </div>
+                {msg.role === "assistant" ? (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-ink text-white">
+                    AI
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-accent text-white">
+                    You
+                  </div>
+                )}
                 <div
                   className={`max-w-[72%] px-3.5 py-2.5 rounded-[12px] text-[13px] leading-relaxed ${
                     msg.role === "assistant"
@@ -627,7 +656,7 @@ export default function SessionPage() {
             ))}
             {sending && (
               <div className="flex gap-2.5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-accent/10 text-accent shrink-0">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-ink text-white">
                   AI
                 </div>
                 <div className="px-3.5 py-2.5 bg-white border border-border rounded-[12px]">
