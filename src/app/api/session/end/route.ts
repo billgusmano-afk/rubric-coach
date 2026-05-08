@@ -82,12 +82,14 @@ export async function POST(request: Request) {
     }
   }
 
-  // Update session with duration and score
+  // Update session with duration, score, and end timestamp.
+  // (Summary is persisted after generation below so the history page can render it.)
   await supabase
     .from("sessions")
     .update({
       duration_seconds: duration_seconds || 0,
       overall_score: overallScore,
+      ended_at: new Date().toISOString(),
     })
     .eq("id", session_id);
 
@@ -119,6 +121,12 @@ Overall Score: ${overallScore}/100`,
   } catch {
     summary = "Session complete. Review your scores above for detailed feedback on each criterion.";
   }
+
+  // Persist the summary so the history detail page can render it later
+  await supabase
+    .from("sessions")
+    .update({ summary })
+    .eq("id", session_id);
 
   return NextResponse.json({
     overall_score: overallScore,
