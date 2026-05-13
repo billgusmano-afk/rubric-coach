@@ -3,6 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+/* ───────────────────── HeyGen constants ───────────────────── */
+const HEYGEN_AVATAR_ID =
+  process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID ?? "bf00036b-558a-44b5-b2ff-1e3cec0f4ceb";
+const HEYGEN_VOICE_ID =
+  process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID ?? "b2bd6569-a537-4342-aeca-a1f15d2a2c97";
+
 /* ───────────────────── Types ───────────────────── */
 
 interface ChatMessage {
@@ -118,6 +124,9 @@ export default function SessionPage() {
   const chatRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const avatarRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Briefing panel expand/collapse
   const [briefingOpen, setBriefingOpen] = useState(true);
@@ -173,11 +182,27 @@ export default function SessionPage() {
   // Voice status
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [avatarReady, setAvatarReady] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
-  // Speak text using ElevenLabs TTS (DISC-matched voice, male for D/S profiles)
+  // Speak text — uses HeyGen streaming avatar when ready, falls back to ElevenLabs TTS
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
+    // ── HeyGen path ──────────────────────────────────────────────────────────
+    if (avatarRef.current && avatarReady) {
+      setVoiceStatus("loading");
+      try {
+        const { TaskType } = await import("@heygen/streaming-avatar");
+        await avatarRef.current.speak({ text, task_type: TaskType.REPEAT });
+        // Status transitions (loading → playing → idle) are driven by avatar events
+      } catch {
+        setVoiceStatus("error");
+      }
+      return;
+    }
+
+    // ── ElevenLabs fallback ──────────────────────────────────────────────────
     // Stop any currently playing audio — detach handlers FIRST so the old
     // element can't fire a stray `error` event into state when we clear its src.
     if (audioRef.current) {
@@ -256,14 +281,76 @@ export default function SessionPage() {
     }
   }
 
-  // Begin session — triggered by user click (needed for Chrome audio policy)
+  // Initialise the HeyGen streaming avatar (called on Begin Session)
+  async function initAvatar(openingMessage: string) {
+    if (!sessionData?.voice_enabled) return;
+    setAvatarLoading(true);
+
+    try {
+      // 1. Get a short-lived token from our backend (keeps API key off the client)
+      const tokenRes = await fetch("/api/heygen/token", { method: "POST" });
+      if (!tokenRes.ok) throw new Error("token fetch failed");
+      const { token } = await tokenRes.json();
+
+      // 2. Dynamically import SDK (avoids SSR issues with browser-only APIs)
+      const { default: StreamingAvatar, AvatarQuality, StreamingEvents, TaskType } =
+        await import("@heygen/streaming-avatar");
+
+      const avatar = new StreamingAvatar({ token });
+      avatarRef.current = avatar;
+
+      // 3. Wire up event listeners before starting
+      avatar.on(StreamingEvents.STREAM_READY, (event: { detail: MediaStream }) => {
+        if (videoRef.current && event.detail) {
+          videoRef.current.srcObject = event.detail;
+          videoRef.current.play().catch(() => {});
+        }
+        setAvatarReady(true);
+        setAvatarLoading(false);
+        setVoiceStatus("idle");
+
+        // Speak the opening message once the stream is live
+        if (openingMessage) {
+          setTimeout(async () => {
+            try {
+              await avatar.speak({ text: openingMessage, task_type: TaskType.REPEAT });
+            } catch { /* ignore */ }
+          }, 600);
+        }
+      });
+
+      avatar.on(StreamingEvents.AVATAR_START_TALKING, () => setVoiceStatus("playing"));
+      avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => setVoiceStatus("idle"));
+
+      avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
+        setAvatarReady(false);
+        setVoiceStatus("idle");
+      });
+
+      // 4. Start the avatar session
+      await avatar.createStartAvatar({
+        avatarName: HEYGEN_AVATAR_ID,
+        quality: AvatarQuality.High,
+        voice: { voiceId: HEYGEN_VOICE_ID },
+        language: "en",
+      });
+    } catch (err) {
+      console.error("HeyGen init error:", err);
+      setAvatarLoading(false);
+      // Graceful fallback: just speak with ElevenLabs
+      if (openingMessage) {
+        setTimeout(() => speak(openingMessage), 300);
+      }
+    }
+  }
+
+  // Begin session — triggered by user click (needed for Chrome audio/video policy)
   function handleBeginSession() {
     setSessionStarted(true);
-    if (sessionData?.voice_enabled && messages.length > 0) {
-      // Small delay then speak the opening message
-      setTimeout(() => {
-        speak(messages[0].content);
-      }, 300);
+    const opening = messages[0]?.content ?? "";
+    if (sessionData?.voice_enabled) {
+      // Try HeyGen first; initAvatar falls back to ElevenLabs on failure
+      initAvatar(opening);
     }
   }
 
@@ -310,6 +397,12 @@ export default function SessionPage() {
   async function endSession() {
     if (!sessionData) return;
     setEnding(true);
+    // Stop HeyGen avatar stream
+    if (avatarRef.current) {
+      try { await avatarRef.current.stopAvatar(); } catch { /* ignore */ }
+      avatarRef.current = null;
+    }
+    setAvatarReady(false);
     // Stop any playing audio and cancel speech synthesis
     if (audioRef.current) audioRef.current.pause();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -605,14 +698,18 @@ export default function SessionPage() {
               </span>
               {sessionData.voice_enabled && (
                 <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                  avatarLoading && !avatarReady ? "bg-gold/10 text-[#92400e]" :
                   voiceStatus === "playing" ? "bg-green/10 text-green animate-pulse" :
                   voiceStatus === "loading" ? "bg-gold/10 text-[#92400e]" :
                   voiceStatus === "error" ? "bg-red/10 text-red" :
+                  avatarReady ? "bg-green/10 text-green" :
                   "bg-accent/[0.08] text-accent"
                 }`}>
-                  {voiceStatus === "playing" ? "🔊 Speaking..." :
+                  {avatarLoading && !avatarReady ? "🎬 Avatar loading..." :
+                   voiceStatus === "playing" ? "🔊 Speaking..." :
                    voiceStatus === "loading" ? "🔊 Loading..." :
                    voiceStatus === "error" ? "🔇 Voice error" :
+                   avatarReady ? "🎬 Avatar live" :
                    "🔊 Voice on"}
                 </span>
               )}
@@ -627,6 +724,43 @@ export default function SessionPage() {
               </button>
             )}
           </div>
+
+          {/* HeyGen avatar video — shown when voice is enabled */}
+          {sessionData.voice_enabled && (
+            <div className="mb-3">
+              {/* Loading state */}
+              {avatarLoading && !avatarReady && (
+                <div className="flex items-center justify-center h-[200px] bg-surface rounded-[12px] border border-border">
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">🎬</div>
+                    <div className="text-xs text-ink-3 animate-pulse">Connecting AI avatar...</div>
+                  </div>
+                </div>
+              )}
+              {/* Video element — always in DOM so the ref is available; hidden until stream is ready */}
+              <div
+                className={`rounded-[12px] overflow-hidden border border-border bg-ink ${
+                  avatarReady ? "block" : "hidden"
+                }`}
+              >
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full"
+                  style={{ maxHeight: "220px", objectFit: "cover", display: "block" }}
+                />
+                <div className="flex items-center justify-between px-3 py-1.5 bg-ink/80">
+                  <span className="text-[10px] text-white/60 font-medium">AI Client</span>
+                  <span className={`text-[10px] font-semibold ${
+                    voiceStatus === "playing" ? "text-green animate-pulse" : "text-white/40"
+                  }`}>
+                    {voiceStatus === "playing" ? "● Speaking" : "● Listening"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div
             ref={chatRef}
