@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.87.0",
+    "@heygen/liveavatar-web-sdk": "^0.0.18",
     "@heygen/streaming-avatar": "^2.0.17",
     "@paypal/paypal-server-sdk": "^2.3.0",
     "@supabase/ssr": "^0.10.2",

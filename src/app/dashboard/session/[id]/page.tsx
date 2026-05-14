@@ -3,11 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-/* ───────────────────── HeyGen constants ───────────────────── */
-const HEYGEN_AVATAR_ID =
-  process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID ?? "bf00036b-558a-44b5-b2ff-1e3cec0f4ceb";
-const HEYGEN_VOICE_ID =
-  process.env.NEXT_PUBLIC_HEYGEN_VOICE_ID ?? "b2bd6569-a537-4342-aeca-a1f15d2a2c97";
+// Avatar ID and Voice ID are now passed server-side via the token API route
 
 /* ───────────────────── Types ───────────────────── */
 
@@ -189,13 +185,12 @@ export default function SessionPage() {
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
-    // ── HeyGen path ──────────────────────────────────────────────────────────
+    // ── LiveAvatar path ───────────────────────────────────────────────────────
     if (avatarRef.current && avatarReady) {
       setVoiceStatus("loading");
       try {
-        const { TaskType } = await import("@heygen/streaming-avatar");
-        await avatarRef.current.speak({ text, task_type: TaskType.REPEAT });
-        // Status transitions (loading → playing → idle) are driven by avatar events
+        avatarRef.current.repeat(text);
+        // Status transitions (loading → playing → idle) driven by avatar events
       } catch {
         setVoiceStatus("error");
       }
@@ -281,63 +276,61 @@ export default function SessionPage() {
     }
   }
 
-  // Initialise the HeyGen streaming avatar (called on Begin Session)
+  // Initialise the LiveAvatar session (called on Begin Session)
+  // Uses @heygen/liveavatar-web-sdk (new API — streaming.* sunset March 2026)
   async function initAvatar(openingMessage: string) {
     if (!sessionData?.voice_enabled) return;
     setAvatarLoading(true);
 
     try {
-      // 1. Get a short-lived token from our backend (keeps API key off the client)
+      // 1. Get a short-lived session token from our backend
       const tokenRes = await fetch("/api/heygen/token", { method: "POST" });
-      if (!tokenRes.ok) throw new Error("token fetch failed");
+      if (!tokenRes.ok) {
+        const errBody = await tokenRes.json().catch(() => ({}));
+        throw new Error(`token fetch failed: ${JSON.stringify(errBody)}`);
+      }
       const { token } = await tokenRes.json();
 
-      // 2. Dynamically import SDK (avoids SSR issues with browser-only APIs)
-      const { default: StreamingAvatar, AvatarQuality, StreamingEvents, TaskType } =
-        await import("@heygen/streaming-avatar");
+      // 2. Dynamically import new SDK (avoids SSR issues)
+      const { LiveAvatarSession, SessionEvent, AgentEventsEnum } =
+        await import("@heygen/liveavatar-web-sdk");
 
-      const avatar = new StreamingAvatar({ token });
-      avatarRef.current = avatar;
+      const session = new LiveAvatarSession(token);
+      avatarRef.current = session;
 
-      // 3. Wire up event listeners before starting
-      avatar.on(StreamingEvents.STREAM_READY, (event: { detail: MediaStream }) => {
-        if (videoRef.current && event.detail) {
-          videoRef.current.srcObject = event.detail;
+      // 3. Wire up events
+      session.on(SessionEvent.SESSION_STREAM_READY, () => {
+        // Attach stream to video element
+        if (videoRef.current) {
+          session.attach(videoRef.current);
           videoRef.current.play().catch(() => {});
         }
         setAvatarReady(true);
         setAvatarLoading(false);
         setVoiceStatus("idle");
 
-        // Speak the opening message once the stream is live
+        // Speak the opening message once stream is live
         if (openingMessage) {
-          setTimeout(async () => {
-            try {
-              await avatar.speak({ text: openingMessage, task_type: TaskType.REPEAT });
-            } catch { /* ignore */ }
+          setTimeout(() => {
+            try { session.repeat(openingMessage); } catch { /* ignore */ }
           }, 600);
         }
       });
 
-      avatar.on(StreamingEvents.AVATAR_START_TALKING, () => setVoiceStatus("playing"));
-      avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => setVoiceStatus("idle"));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setVoiceStatus("playing"));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setVoiceStatus("idle"));
 
-      avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
+      session.on(SessionEvent.SESSION_DISCONNECTED, () => {
         setAvatarReady(false);
         setVoiceStatus("idle");
       });
 
-      // 4. Start the avatar session
-      await avatar.createStartAvatar({
-        avatarName: HEYGEN_AVATAR_ID,
-        quality: AvatarQuality.High,
-        voice: { voiceId: HEYGEN_VOICE_ID },
-        language: "en",
-      });
+      // 4. Start the session
+      await session.start();
     } catch (err) {
-      console.error("HeyGen init error:", err);
+      console.error("LiveAvatar init error:", err);
       setAvatarLoading(false);
-      // Graceful fallback: just speak with ElevenLabs
+      // Graceful fallback: ElevenLabs TTS
       if (openingMessage) {
         setTimeout(() => speak(openingMessage), 300);
       }
@@ -397,9 +390,9 @@ export default function SessionPage() {
   async function endSession() {
     if (!sessionData) return;
     setEnding(true);
-    // Stop HeyGen avatar stream
+    // Stop LiveAvatar stream
     if (avatarRef.current) {
-      try { await avatarRef.current.stopAvatar(); } catch { /* ignore */ }
+      try { await avatarRef.current.stop(); } catch { /* ignore */ }
       avatarRef.current = null;
     }
     setAvatarReady(false);
