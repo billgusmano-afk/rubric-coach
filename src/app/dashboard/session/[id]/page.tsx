@@ -300,10 +300,9 @@ export default function SessionPage() {
 
       // 3. Wire up events
       session.on(SessionEvent.SESSION_STREAM_READY, () => {
-        // Attach stream to video element
+        // Attach stream to video element (initial attachment)
         if (videoRef.current) {
           session.attach(videoRef.current);
-          videoRef.current.play().catch(() => {});
         }
         setAvatarReady(true);
         setAvatarLoading(false);
@@ -317,8 +316,24 @@ export default function SessionPage() {
         }
       });
 
-      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setVoiceStatus("playing"));
-      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setVoiceStatus("idle"));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
+        // Re-attach in case the SDK switched to a new stream track when speaking began
+        if (videoRef.current) {
+          try {
+            session.attach(videoRef.current);
+            videoRef.current.play().catch(() => {});
+          } catch { /* ignore */ }
+        }
+        setVoiceStatus("playing");
+      });
+
+      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
+        // Keep video attached after speaking ends
+        if (videoRef.current) {
+          try { session.attach(videoRef.current); } catch { /* ignore */ }
+        }
+        setVoiceStatus("idle");
+      });
 
       session.on(SessionEvent.SESSION_DISCONNECTED, () => {
         setAvatarReady(false);
