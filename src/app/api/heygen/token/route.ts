@@ -40,7 +40,7 @@ export async function POST() {
     }
 
     const data = await res.json();
-    const token = data?.session_token;
+    const token = data?.data?.session_token;
 
     if (!token) {
       return NextResponse.json({ error: "No session_token in response", raw: data }, { status: 500 });
