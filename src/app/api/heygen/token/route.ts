@@ -23,7 +23,10 @@ export async function POST() {
     if (!res.ok) {
       const text = await res.text();
       console.error("HeyGen token error:", res.status, text);
-      return NextResponse.json({ error: "Failed to create HeyGen token" }, { status: res.status });
+      return NextResponse.json(
+        { error: "Failed to create HeyGen token", heygen_status: res.status, heygen_body: text },
+        { status: res.status }
+      );
     }
 
     const data = await res.json();
