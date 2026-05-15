@@ -194,24 +194,42 @@ export default function SessionPage() {
     });
   }
 
-  // Speak text — uses LiveAvatar when ready + in avatar mode, falls back to ElevenLabs TTS
+  // Speak text — in avatar mode: fetch ElevenLabs audio → send base64 to avatar for lip-sync
+  //              in chat mode: silent (text only)
+  //              fallback: ElevenLabs direct playback
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
-    // ── LiveAvatar path (only when avatar mode is active) ────────────────────
-    if (avatarRef.current && avatarReady && displayMode === "avatar") {
+    // Chat mode — text only, no audio
+    if (displayMode === "chat") return;
+
+    // ── LiveAvatar path: ElevenLabs audio → avatar lip-sync ──────────────────
+    if (avatarRef.current && avatarReady) {
       setVoiceStatus("loading");
       try {
-        avatarRef.current.repeat(text);
-        // Status transitions (loading → playing → idle) driven by avatar events
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, disc_profile: sessionData.disc_profile || "D" }),
+        });
+        if (!res.ok) throw new Error("TTS failed");
+
+        // Convert audio blob → base64 for repeatAudio()
+        const blob = await res.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const base64Audio = btoa(binary);
+
+        // Send to avatar — it lip-syncs to our DISC-matched ElevenLabs voice
+        avatarRef.current.repeatAudio(base64Audio);
+        // Status driven by AVATAR_SPEAK_STARTED / AVATAR_SPEAK_ENDED events
       } catch {
         setVoiceStatus("error");
       }
       return;
     }
-
-    // In chat mode — no voice output, just show text
-    if (displayMode === "chat") return;
 
     // ── ElevenLabs fallback ──────────────────────────────────────────────────
     // Stop any currently playing audio — detach handlers FIRST so the old
@@ -316,41 +334,23 @@ export default function SessionPage() {
 
       // 3. Wire up events
       session.on(SessionEvent.SESSION_STREAM_READY, () => {
-        // Attach stream to video element (initial attachment)
+        // Single attachment point — one element, one attach call
         if (videoRef.current) {
           session.attach(videoRef.current);
+          videoRef.current.play().catch(() => {});
         }
         setAvatarReady(true);
         setAvatarLoading(false);
         setVoiceStatus("idle");
 
-        // Speak the opening message once stream is live
+        // Speak opening message via repeatAudio so avatar lip-syncs to ElevenLabs voice
         if (openingMessage) {
-          setTimeout(() => {
-            try { session.repeat(openingMessage); } catch { /* ignore */ }
-          }, 600);
+          setTimeout(() => speak(openingMessage), 800);
         }
       });
 
-      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
-        // Re-attach in case the SDK switched to a new stream track when speaking began
-        if (videoRef.current) {
-          try {
-            session.attach(videoRef.current);
-            videoRef.current.play().catch(() => {});
-          } catch { /* ignore */ }
-        }
-        setVoiceStatus("playing");
-      });
-
-      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
-        // Keep video attached after speaking ends
-        if (videoRef.current) {
-          try { session.attach(videoRef.current); } catch { /* ignore */ }
-        }
-        setVoiceStatus("idle");
-      });
-
+      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setVoiceStatus("playing"));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setVoiceStatus("idle"));
       session.on(SessionEvent.SESSION_DISCONNECTED, () => {
         setAvatarReady(false);
         setVoiceStatus("idle");
@@ -763,17 +763,9 @@ export default function SessionPage() {
             )}
           </div>
 
-          {/* Video element — always in DOM to keep ref stable, visibility controlled by mode */}
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="hidden"
-          />
-
-          {/* Avatar video panel — shown in avatar mode only */}
-          {sessionData.voice_enabled && displayMode === "avatar" && (
-            <div className="mb-3">
+          {/* ── Avatar video panel ── single element, CSS-controlled visibility ── */}
+          {sessionData.voice_enabled && (
+            <div className={`mb-3 ${displayMode === "avatar" ? "block" : "hidden"}`}>
               {/* Loading state */}
               {avatarLoading && !avatarReady && (
                 <div className="flex items-center justify-center h-[200px] bg-surface rounded-[12px] border border-border">
@@ -783,31 +775,24 @@ export default function SessionPage() {
                   </div>
                 </div>
               )}
-              {/* Visible avatar display — mirrors the hidden video element via CSS trick */}
-              {avatarReady && (
-                <div className="rounded-[12px] overflow-hidden border border-border bg-ink">
-                  <video
-                    ref={(el) => {
-                      // Keep primary ref stable; also drive this display clone via attach()
-                      if (el && avatarRef.current) {
-                        try { avatarRef.current.attach(el); } catch { /* ignore */ }
-                      }
-                    }}
-                    autoPlay
-                    playsInline
-                    className="w-full"
-                    style={{ maxHeight: "220px", objectFit: "cover", display: "block" }}
-                  />
-                  <div className="flex items-center justify-between px-3 py-1.5 bg-ink/80">
-                    <span className="text-[10px] text-white/60 font-medium">AI Client</span>
-                    <span className={`text-[10px] font-semibold ${
-                      voiceStatus === "playing" ? "text-green animate-pulse" : "text-white/40"
-                    }`}>
-                      {voiceStatus === "playing" ? "● Speaking" : "● Listening"}
-                    </span>
-                  </div>
+              {/* Single video element — always in DOM once session starts so ref is stable */}
+              <div className={`rounded-[12px] overflow-hidden border border-border bg-ink ${avatarReady ? "block" : "hidden"}`}>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full"
+                  style={{ maxHeight: "220px", objectFit: "cover", display: "block" }}
+                />
+                <div className="flex items-center justify-between px-3 py-1.5 bg-ink/80">
+                  <span className="text-[10px] text-white/60 font-medium">AI Client</span>
+                  <span className={`text-[10px] font-semibold ${
+                    voiceStatus === "playing" ? "text-green animate-pulse" : "text-white/40"
+                  }`}>
+                    {voiceStatus === "playing" ? "● Speaking" : "● Listening"}
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
