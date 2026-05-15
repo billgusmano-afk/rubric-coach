@@ -180,13 +180,26 @@ export default function SessionPage() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [avatarReady, setAvatarReady] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  // "avatar" = video + voice active; "chat" = text-only (avatar stream stays connected)
+  const [displayMode, setDisplayMode] = useState<"avatar" | "chat">("avatar");
 
-  // Speak text — uses HeyGen streaming avatar when ready, falls back to ElevenLabs TTS
+  function toggleDisplayMode() {
+    setDisplayMode((prev) => {
+      const next = prev === "avatar" ? "chat" : "avatar";
+      // Interrupt any avatar speech when switching to chat
+      if (next === "chat" && avatarRef.current) {
+        try { avatarRef.current.interrupt(); } catch { /* ignore */ }
+      }
+      return next;
+    });
+  }
+
+  // Speak text — uses LiveAvatar when ready + in avatar mode, falls back to ElevenLabs TTS
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
-    // ── LiveAvatar path ───────────────────────────────────────────────────────
-    if (avatarRef.current && avatarReady) {
+    // ── LiveAvatar path (only when avatar mode is active) ────────────────────
+    if (avatarRef.current && avatarReady && displayMode === "avatar") {
       setVoiceStatus("loading");
       try {
         avatarRef.current.repeat(text);
@@ -196,6 +209,9 @@ export default function SessionPage() {
       }
       return;
     }
+
+    // In chat mode — no voice output, just show text
+    if (displayMode === "chat") return;
 
     // ── ElevenLabs fallback ──────────────────────────────────────────────────
     // Stop any currently playing audio — detach handlers FIRST so the old
@@ -710,16 +726,30 @@ export default function SessionPage() {
                   voiceStatus === "playing" ? "bg-green/10 text-green animate-pulse" :
                   voiceStatus === "loading" ? "bg-gold/10 text-[#92400e]" :
                   voiceStatus === "error" ? "bg-red/10 text-red" :
-                  avatarReady ? "bg-green/10 text-green" :
+                  avatarReady && displayMode === "avatar" ? "bg-green/10 text-green" :
                   "bg-accent/[0.08] text-accent"
                 }`}>
                   {avatarLoading && !avatarReady ? "🎬 Avatar loading..." :
                    voiceStatus === "playing" ? "🔊 Speaking..." :
                    voiceStatus === "loading" ? "🔊 Loading..." :
                    voiceStatus === "error" ? "🔇 Voice error" :
-                   avatarReady ? "🎬 Avatar live" :
-                   "🔊 Voice on"}
+                   avatarReady && displayMode === "avatar" ? "🎬 Avatar live" :
+                   "💬 Chat mode"}
                 </span>
+              )}
+              {/* Mode toggle — always visible once session is live */}
+              {sessionData.voice_enabled && (
+                <button
+                  onClick={toggleDisplayMode}
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold rounded-full border transition-colors ${
+                    displayMode === "avatar"
+                      ? "bg-accent/[0.08] border-accent/30 text-accent hover:bg-accent/20"
+                      : "bg-surface border-border text-ink-3 hover:border-accent hover:text-accent"
+                  }`}
+                  title={displayMode === "avatar" ? "Switch to chat mode" : "Switch to avatar mode"}
+                >
+                  {displayMode === "avatar" ? "🎬 → 💬 Chat" : "💬 → 🎬 Avatar"}
+                </button>
               )}
             </div>
             {!sessionEnded && (
@@ -733,8 +763,16 @@ export default function SessionPage() {
             )}
           </div>
 
-          {/* HeyGen avatar video — shown when voice is enabled */}
-          {sessionData.voice_enabled && (
+          {/* Video element — always in DOM to keep ref stable, visibility controlled by mode */}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="hidden"
+          />
+
+          {/* Avatar video panel — shown in avatar mode only */}
+          {sessionData.voice_enabled && displayMode === "avatar" && (
             <div className="mb-3">
               {/* Loading state */}
               {avatarLoading && !avatarReady && (
@@ -745,28 +783,31 @@ export default function SessionPage() {
                   </div>
                 </div>
               )}
-              {/* Video element — always in DOM so the ref is available; hidden until stream is ready */}
-              <div
-                className={`rounded-[12px] overflow-hidden border border-border bg-ink ${
-                  avatarReady ? "block" : "hidden"
-                }`}
-              >
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full"
-                  style={{ maxHeight: "220px", objectFit: "cover", display: "block" }}
-                />
-                <div className="flex items-center justify-between px-3 py-1.5 bg-ink/80">
-                  <span className="text-[10px] text-white/60 font-medium">AI Client</span>
-                  <span className={`text-[10px] font-semibold ${
-                    voiceStatus === "playing" ? "text-green animate-pulse" : "text-white/40"
-                  }`}>
-                    {voiceStatus === "playing" ? "● Speaking" : "● Listening"}
-                  </span>
+              {/* Visible avatar display — mirrors the hidden video element via CSS trick */}
+              {avatarReady && (
+                <div className="rounded-[12px] overflow-hidden border border-border bg-ink">
+                  <video
+                    ref={(el) => {
+                      // Keep primary ref stable; also drive this display clone via attach()
+                      if (el && avatarRef.current) {
+                        try { avatarRef.current.attach(el); } catch { /* ignore */ }
+                      }
+                    }}
+                    autoPlay
+                    playsInline
+                    className="w-full"
+                    style={{ maxHeight: "220px", objectFit: "cover", display: "block" }}
+                  />
+                  <div className="flex items-center justify-between px-3 py-1.5 bg-ink/80">
+                    <span className="text-[10px] text-white/60 font-medium">AI Client</span>
+                    <span className={`text-[10px] font-semibold ${
+                      voiceStatus === "playing" ? "text-green animate-pulse" : "text-white/40"
+                    }`}>
+                      {voiceStatus === "playing" ? "● Speaking" : "● Listening"}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
