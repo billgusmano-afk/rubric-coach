@@ -180,6 +180,8 @@ export default function SessionPage() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [avatarReady, setAvatarReady] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  // Ref mirrors avatarReady so async callbacks always read the current value
+  const avatarReadyRef = useRef(false);
   // "avatar" = video + voice active; "chat" = text-only (avatar stream stays connected)
   const [displayMode, setDisplayMode] = useState<"avatar" | "chat">("avatar");
 
@@ -204,7 +206,7 @@ export default function SessionPage() {
     if (displayMode === "chat") return;
 
     // ── LiveAvatar path: ElevenLabs audio → avatar lip-sync ──────────────────
-    if (avatarRef.current && avatarReady) {
+    if (avatarRef.current && avatarReadyRef.current) {
       setVoiceStatus("loading");
       try {
         const res = await fetch("/api/tts", {
@@ -339,11 +341,12 @@ export default function SessionPage() {
           session.attach(videoRef.current);
           videoRef.current.play().catch(() => {});
         }
+        avatarReadyRef.current = true;
         setAvatarReady(true);
         setAvatarLoading(false);
         setVoiceStatus("idle");
 
-        // Speak opening message via repeatAudio so avatar lip-syncs to ElevenLabs voice
+        // Speak opening message — use ref so closure reads current "ready" value
         if (openingMessage) {
           setTimeout(() => speak(openingMessage), 800);
         }
@@ -352,6 +355,7 @@ export default function SessionPage() {
       session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setVoiceStatus("playing"));
       session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setVoiceStatus("idle"));
       session.on(SessionEvent.SESSION_DISCONNECTED, () => {
+        avatarReadyRef.current = false;
         setAvatarReady(false);
         setVoiceStatus("idle");
       });
@@ -426,6 +430,7 @@ export default function SessionPage() {
       try { await avatarRef.current.stop(); } catch { /* ignore */ }
       avatarRef.current = null;
     }
+    avatarReadyRef.current = false;
     setAvatarReady(false);
     // Stop any playing audio and cancel speech synthesis
     if (audioRef.current) audioRef.current.pause();
