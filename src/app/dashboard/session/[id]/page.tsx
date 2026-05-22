@@ -202,6 +202,12 @@ export default function SessionPage() {
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
+    console.log("[speak]", {
+      displayMode,
+      hasSession: !!avatarRef.current,
+      avatarReady: avatarReadyRef.current,
+    });
+
     // Chat mode — text only, no audio
     if (displayMode === "chat") return;
 
@@ -225,7 +231,9 @@ export default function SessionPage() {
         const base64Audio = btoa(binary);
 
         // Send to avatar — it lip-syncs to our DISC-matched ElevenLabs voice
+        console.log("[speak] calling repeatAudio, base64 length:", base64Audio.length);
         avatarRef.current.repeatAudio(base64Audio);
+        console.log("[speak] repeatAudio called OK");
         // Status driven by AVATAR_SPEAK_STARTED / AVATAR_SPEAK_ENDED events
       } catch {
         setVoiceStatus("error");
@@ -336,6 +344,7 @@ export default function SessionPage() {
 
       // 3. Wire up events
       session.on(SessionEvent.SESSION_STREAM_READY, () => {
+        console.log("[LiveAvatar] SESSION_STREAM_READY");
         // Single attachment point — one element, one attach call
         if (videoRef.current) {
           session.attach(videoRef.current);
@@ -355,6 +364,7 @@ export default function SessionPage() {
       session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setVoiceStatus("playing"));
       session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setVoiceStatus("idle"));
       session.on(SessionEvent.SESSION_DISCONNECTED, () => {
+        console.log("[LiveAvatar] SESSION_DISCONNECTED");
         avatarReadyRef.current = false;
         setAvatarReady(false);
         setVoiceStatus("idle");
