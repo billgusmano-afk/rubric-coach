@@ -196,9 +196,21 @@ export default function SessionPage() {
     });
   }
 
-  // Speak text — in avatar mode: fetch ElevenLabs audio → send base64 to avatar for lip-sync
+  // Helper: convert ArrayBuffer → base64 string (chunked to avoid stack overflow)
+  function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 8192;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+  }
+
+  // Speak text — in avatar mode: fetch ElevenLabs PCM → repeatAudio() for lip-sync
   //              in chat mode: silent (text only)
-  //              fallback: ElevenLabs direct playback
+  //              fallback: ElevenLabs MP3 direct playback
   async function speak(text: string) {
     if (!sessionData || typeof window === "undefined") return;
 
@@ -211,37 +223,33 @@ export default function SessionPage() {
     // Chat mode — text only, no audio
     if (displayMode === "chat") return;
 
-    // ── LiveAvatar path: ElevenLabs audio → avatar lip-sync ──────────────────
+    // ── LiveAvatar path: fetch PCM 24kHz → repeatAudio() for lip-sync ──────
+    // In LITE mode, we supply audio; avatar handles lip-sync + video stream.
+    // repeatAudio() sends PCM chunks via WebSocket to the LiveAvatar server.
     if (avatarRef.current && avatarReadyRef.current) {
       setVoiceStatus("loading");
       try {
-        const res = await fetch("/api/tts", {
+        const pcmRes = await fetch("/api/tts-pcm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, disc_profile: sessionData.disc_profile || "D" }),
         });
-        if (!res.ok) throw new Error("TTS failed");
-
-        // Convert audio blob → base64 for repeatAudio()
-        const blob = await res.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = "";
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        const base64Audio = btoa(binary);
-
-        // Send to avatar — it lip-syncs to our DISC-matched ElevenLabs voice
-        console.log("[speak] calling repeatAudio, base64 length:", base64Audio.length);
-        avatarRef.current.repeatAudio(base64Audio);
-        console.log("[speak] repeatAudio called OK");
-        // Status driven by AVATAR_SPEAK_STARTED / AVATAR_SPEAK_ENDED events
-      } catch {
-        setVoiceStatus("error");
+        if (pcmRes.ok) {
+          const buffer = await pcmRes.arrayBuffer();
+          const base64 = arrayBufferToBase64(buffer);
+          console.log("[speak] calling repeatAudio(), pcm bytes:", buffer.byteLength);
+          avatarRef.current.repeatAudio(base64);
+          console.log("[speak] repeatAudio() called OK");
+          return; // Avatar handles audio playback — don't also play ElevenLabs
+        } else {
+          console.warn("[speak] /api/tts-pcm failed:", pcmRes.status, "— falling back to ElevenLabs");
+        }
+      } catch (e) {
+        console.error("[speak] repeatAudio path failed:", e, "— falling back to ElevenLabs");
       }
-      return;
     }
 
-    // ── ElevenLabs fallback ──────────────────────────────────────────────────
+    // ── ElevenLabs fallback (MP3 direct playback) ────────────────────────────
     // Stop any currently playing audio — detach handlers FIRST so the old
     // element can't fire a stray `error` event into state when we clear its src.
     if (audioRef.current) {
@@ -322,6 +330,16 @@ export default function SessionPage() {
 
   // Initialise the LiveAvatar session (called on Begin Session)
   // Uses @heygen/liveavatar-web-sdk (new API — streaming.* sunset March 2026)
+  //
+  // LITE mode flow:
+  //   1. session.start() → LiveKit room connected + WebSocket opened → CONNECTED state
+  //   2. We set avatarReady=true and call speak(openingMessage)
+  //   3. speak() fetches PCM from ElevenLabs → repeatAudio(base64PCM)
+  //   4. Server lip-syncs avatar to PCM → streams video+audio back via LiveKit
+  //   5. SESSION_STREAM_READY fires (both tracks now present) → attach video element
+  //
+  // We do NOT wait for SESSION_STREAM_READY to set ready — that creates a circular
+  // dependency (we need to send audio first before the audio track arrives).
   async function initAvatar(openingMessage: string) {
     if (!sessionData?.voice_enabled) return;
     setAvatarLoading(true);
@@ -342,23 +360,15 @@ export default function SessionPage() {
       const session = new LiveAvatarSession(token);
       avatarRef.current = session;
 
-      // 3. Wire up events
+      // 3. Wire up events BEFORE start()
       session.on(SessionEvent.SESSION_STREAM_READY, () => {
-        console.log("[LiveAvatar] SESSION_STREAM_READY");
-        // Single attachment point — one element, one attach call
+        // Both video+audio tracks are now present — safe to attach
+        console.log("[LiveAvatar] SESSION_STREAM_READY — attaching video element");
         if (videoRef.current) {
           session.attach(videoRef.current);
           videoRef.current.play().catch(() => {});
         }
-        avatarReadyRef.current = true;
-        setAvatarReady(true);
-        setAvatarLoading(false);
-        setVoiceStatus("idle");
-
-        // Speak opening message — use ref so closure reads current "ready" value
-        if (openingMessage) {
-          setTimeout(() => speak(openingMessage), 800);
-        }
+        setAvatarReady(true); // ensure badge stays green
       });
 
       session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setVoiceStatus("playing"));
@@ -370,12 +380,24 @@ export default function SessionPage() {
         setVoiceStatus("idle");
       });
 
-      // 4. Start the session
+      // 4. Start the session — resolves once CONNECTED (LiveKit room + WS open)
       await session.start();
+      console.log("[LiveAvatar] session.start() resolved — session CONNECTED");
+
+      // 5. Session is ready to receive commands — set ready BEFORE speaking
+      avatarReadyRef.current = true;
+      setAvatarReady(true);
+      setAvatarLoading(false);
+      setVoiceStatus("idle");
+
+      // 6. Speak opening message — repeatAudio() will trigger SESSION_STREAM_READY
+      if (openingMessage) {
+        setTimeout(() => speak(openingMessage), 800);
+      }
     } catch (err) {
       console.error("LiveAvatar init error:", err);
       setAvatarLoading(false);
-      // Graceful fallback: ElevenLabs TTS
+      // Graceful fallback: ElevenLabs TTS direct playback
       if (openingMessage) {
         setTimeout(() => speak(openingMessage), 300);
       }
