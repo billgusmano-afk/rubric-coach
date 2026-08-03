@@ -203,7 +203,7 @@ export default function SessionPage() {
     let binary = "";
     for (let i = 0; i < bytes.length; i += chunkSize) {
       const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
-      binary += String.fromCharCode(...chunk);
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
     }
     return btoa(binary);
   }
