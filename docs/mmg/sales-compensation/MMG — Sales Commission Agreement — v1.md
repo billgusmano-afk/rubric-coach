@@ -1,0 +1,97 @@
+# MMG Global LLC — Sales Commission Agreement — v1 (Markdown reference copy)
+
+*Reference copy of `MMG — Sales Commission Agreement — v1.html` (the branded, signature-ready rendition). Box home: `00 — MMG Operating System / 10 — Sales Compensation`. Template — not legal advice; counsel review before execution.*
+
+This Sales Commission Agreement (this "Agreement") is entered into as of ________ (the "Effective Date"), by and between **MMG Global LLC**, an Arizona limited liability company d/b/a The Motivated Mind Group, 260 S Arizona Ave, Chandler, AZ 85225 ("MMG" or the "Company"), and ________ (the "Sales Representative").
+
+## 1. Purpose
+
+Establishes the terms under which the Sales Representative earns commissions on sales of MMG products and services, with the commission basis for every engagement known, fixed, and agreed **before** the customer signs.
+
+## 2. Definitions
+
+1. **"Approved Contract Value"** — the total selling price of a customer engagement as stated in the customer proposal, statement of work, or contract approved by MMG management, as increased or decreased solely by an approved Change Order.
+2. **"Approved Pricing Worksheet"** — the internal pricing worksheet prepared by MMG for each proposal before it is sent to the customer, setting out the Approved Contract Value, the Approved Direct Delivery Costs, and the resulting CGP, approved in writing by MMG management.
+3. **"Approved Direct Delivery Costs"** — solely (a) labor costs of MMG employees specifically budgeted for the engagement, and (b) labor costs of approved subcontractors and freelancers (including video production, instructional design, animation, and specialized consulting talent) specifically budgeted for the engagement, as identified in the Approved Pricing Worksheet. Expressly **excludes** all overhead and operating expenses: rent, executive salaries, software subscriptions, marketing, G&A, office overhead.
+4. **"Commissionable Gross Profit" ("CGP")** — the estimated gross profit established and approved by MMG Global LLC at the time a customer proposal or statement of work is approved. CGP equals the Approved Contract Value less the Approved Direct Delivery Costs identified in the Approved Pricing Worksheet. Once approved, CGP remains **fixed** for commission purposes and shall **not** be adjusted for actual project costs, internal efficiencies, write-offs, scope changes, or project profitability, unless the customer contract value is increased or decreased through an approved Change Order.
+5. **"Change Order"** — a written modification to a customer contract, approved by MMG management and the customer, that increases or decreases the Approved Contract Value; triggers a revised Approved Pricing Worksheet, applied prospectively.
+6. **"Commission Rate"** — ____% of CGP, unless a different rate is set out in a written schedule signed by both Parties.
+7. **"Net Customer Payment"** — amounts actually received by MMG from the customer, net of refunds, credits, and chargebacks.
+
+**Plain-language summary:** commission is calculated on the profit estimate locked when the quote is approved — Approved Contract Value minus budgeted employee and approved subcontractor labor. Over or under budget, the basis does not change. Only a customer-approved change order changes it.
+
+## 3. Illustrative Example
+
+| Item | Amount |
+|---|---|
+| Approved Contract Value (Sales Price) | $100,000 |
+| Approved Direct Delivery Costs | $55,000 |
+| **Commissionable Gross Profit (CGP)** | **$45,000** |
+
+Over or under budget, commission on this engagement is calculated on $45,000.
+
+## 4. Commission Plan
+
+1. Commission per engagement = Commission Rate × CGP on the Approved Pricing Worksheet.
+2. No commission accrues on any proposal that lacks an Approved Pricing Worksheet; MMG prepares one for every proposal before it goes to the customer.
+3. Actual project profitability has no effect on commissions — overruns, absorbed scope creep, staffing decisions, vendor changes, inefficiencies, and write-offs neither reduce nor increase the basis.
+4. Pre-approval discounts are reflected in the Approved Contract Value; post-approval concessions without a Change Order do not reduce CGP.
+
+## 5. Earning, Payment, and Adjustments
+
+1. **Earned** proportionally as Net Customer Payments are received, in the ratio each payment bears to the Approved Contract Value.
+2. **Paid** no later than the last day of the month following the month the corresponding payment is received.
+3. Non-payment: commission is due only on amounts actually received; advances on refunded/charged-back amounts are offset against future commissions.
+4. Change Orders: CGP recalculated per the revised worksheet, applied prospectively.
+5. House accounts and splits: documented in a written schedule approved before proposal approval.
+
+## 6. Termination
+
+1. Either Party may terminate at any time, with or without cause, on written notice.
+2. Post-termination, commissions remain payable on engagements with a pre-termination Approved Pricing Worksheet, to the extent payments are received within ninety (90) days after termination.
+3. Nothing herein modifies at-will employment or creates an obligation of continued engagement.
+
+## 7. Records and Dispute Resolution
+
+1. The Approved Pricing Worksheet is the conclusive record of the commission basis; the Sales Representative receives the worksheet (or its CGP figure) at or before proposal approval.
+2. Commission statements accompany each payment; disputes must be raised in writing within sixty (60) days or the statement is deemed accepted.
+3. Good-faith negotiation with MMG's CEO or designee first.
+
+## 8. Confidentiality
+
+All non-public MMG information — pricing worksheets, cost structures, commission terms, customer lists, deal terms — kept confidential during and after the term; used solely to perform under this Agreement.
+
+## 9. General Provisions
+
+1. **Governing law:** Arizona; venue Maricopa County, Arizona.
+2. **Entire agreement** (with schedules and Approved Pricing Worksheets); supersedes prior commission arrangements.
+3. **Amendment** only in a signed writing; MMG may amend the Commission Rate prospectively on thirty (30) days' notice.
+4. **Severability; waiver.**
+5. **No assignment** without MMG's prior written consent.
+6. **Counterparts; electronic signature.**
+
+## Exhibit A — Approved Pricing Worksheet (Template)
+
+| Field | Entry |
+|---|---|
+| Customer / Engagement | |
+| Proposal / SOW reference & date | |
+| Approved Contract Value | $ |
+| Estimated MMG employee labor | $ |
+| Estimated approved subcontractor / freelancer labor | $ |
+| Approved Direct Delivery Costs (total) | $ |
+| **Commissionable Gross Profit (CGP)** | **$** |
+| Commission Rate | % |
+| Commission at approval | $ |
+| Management approval (name / date) | |
+
+## Signatures
+
+**MMG Global LLC d/b/a The Motivated Mind Group**
+Signature: ______________________  Name: William J. Gusmano  Title: Co-Founder & CEO  Date: ________
+
+**Sales Representative**
+Signature: ______________________  Name (print): ________  Title: ________  Date: ________
+
+---
+© 2026 The Motivated Mind Group Inc. | 480-219-2875 | support@themotivatedmindgroup.com | 260 S Arizona Ave, Chandler AZ 85225
