@@ -25,17 +25,8 @@
     padding: 24px 0 18px 0; border-bottom: 3px solid #1D1D1B; margin-bottom: 28px;
   }
   .logo-slot { display: flex; align-items: center; gap: 12px; }
-  .logo-mark {
-    width: 54px; height: 54px; border-radius: 50%;
-    background: linear-gradient(45deg, #FF8BAE 20%, #FF8F8B 80%);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Source Serif Pro', Georgia, serif; font-weight: 600;
-    color: #fff; font-size: 26pt;
-  }
-  /* NOTE: Per MMG brand rules, replace .logo-slot with the official Master Logo file
-     (landscape gradient, black text) before external use. Visual gate: Paul & Tracy. */
-  .logo-word { font-family: 'Source Serif Pro', Georgia, serif; font-weight: 600; font-size: 15pt; color: #1D1D1B; }
-  .logo-word span { display: block; font-family: 'Open Sans', Arial, sans-serif; font-weight: 400; font-size: 8.5pt; color: #1D1D1B; }
+  .logo-slot svg { height: 62px; width: auto; display: block; }
+  .logo-sub { font-family: 'Open Sans', Arial, sans-serif; font-weight: 400; font-size: 8.5pt; color: #1D1D1B; margin-top: 4px; }
   .doc-type { text-align: right; font-size: 9pt; color: #1D1D1B; }
   h1 {
     font-family: 'Source Serif Pro', Georgia, serif; font-weight: 600;
@@ -83,8 +74,22 @@
 
 <header class="doc-header">
   <div class="logo-slot">
-    <div class="logo-mark">M</div>
-    <div class="logo-word">The Motivated Mind Group<span>MMG Global LLC — WBENC Certified Women-Owned</span></div>
+    <div>
+      <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Motivated Mind Group">
+        <defs>
+          <linearGradient id="mmgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="20%" stop-color="#FF8BAE"/>
+            <stop offset="80%" stop-color="#FF8F8B"/>
+          </linearGradient>
+        </defs>
+        <circle cx="30" cy="140" r="17" fill="#FF8BAE"/>
+        <path d="M 66 138 L 98 66 L 130 138" fill="none" stroke="url(#mmgGrad)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 130 138 L 162 66 L 196 150" fill="none" stroke="url(#mmgGrad)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="250" y="95" font-family="'Open Sans',Arial,sans-serif" font-size="40" font-weight="500" fill="#1D1D1B">The Motivated</text>
+        <text x="250" y="145" font-family="'Open Sans',Arial,sans-serif" font-size="40" font-weight="500" fill="#1D1D1B">Mind Group</text>
+      </svg>
+      <div class="logo-sub">MMG Global LLC — WBENC Certified Women-Owned</div>
+    </div>
   </div>
   <div class="doc-type">
     <strong>SALES COMMISSION AGREEMENT</strong><br>
@@ -204,7 +209,7 @@
 
 <footer class="doc-footer">
   © 2026 The Motivated Mind Group Inc. | 480-219-2875 | support@themotivatedmindgroup.com | 260 S Arizona Ave, Chandler AZ 85225<br>
-  <em>Template — not legal advice. Have counsel review before execution. Replace the header logo placeholder with the official MMG Master Logo file (visual gate: Paul &amp; Tracy) before external use.</em>
+  <em>Template — not legal advice. Have counsel review before execution.</em>
 </footer>
 
 </div>
