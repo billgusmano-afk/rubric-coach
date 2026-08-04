@@ -46,20 +46,19 @@ No arguments. No recalculations. No surprises.
 
 > **Commissionable Gross Profit ("CGP")** means the estimated gross profit established and approved by MMG Global LLC at the time a customer proposal or statement of work is approved. CGP equals the Approved Contract Value less the Approved Direct Delivery Costs identified in the approved pricing worksheet, where Direct Delivery Costs consist solely of the labor costs of MMG employees and approved subcontractors or freelancers specifically budgeted for that engagement. All other company overhead and operating expenses are excluded. Once approved, the Commissionable Gross Profit shall remain fixed for commission purposes and shall not be adjusted for actual project costs, internal efficiencies, write-offs, scope changes, or project profitability unless the customer contract value is increased or decreased through an approved change order.
 
-## Commission rates — incremental tiers, Named Accounts only (Bill, 2026-08-03)
+## Commission rates — incremental tiers, Named and Approved Accounts only (Bill, 2026-08-03)
 
-- Commissions apply to **Named Accounts only** — accounts expressly assigned to the rep in writing (contract Exhibit B). Everything else is a **House Account / Other Sales Account** with no commission unless separately agreed in writing.
-- Rates are **incremental (marginal)** on Gross Profit (= CGP), stepping up with cumulative Named-Account revenue in the calendar Plan Year (resets annually):
+- Commissions apply **only to Named and Approved Accounts** — the rep must request an account (or a scoped portion: division, business unit, buying group, or opportunity) in writing, and MMG approves or denies at its sole discretion (contract Exhibit B). **Everything else is non-commissionable by default** — no writing or designation needed from MMG. Rationale: on very large existing accounts (e.g. Brocade) MMG may commission only the group where the rep is actively driving new business (e.g. the marketing department Jeff is selling into), not the whole relationship.
+- Rates are **incremental (marginal)** on Gross Profit (= CGP), starting at 20% and capped at 35%, stepping up with cumulative Named-Account revenue in the calendar Plan Year (resets annually):
 
 | Tier | Cumulative Named-Account Revenue | Rate (% of Gross Profit) |
 |---|---|---|
-| 1 | First $250,000 | 15% |
-| 2 | Over $250,000 up to $500,000 | 20% |
-| 3 | Over $500,000 up to $750,000 | 25% |
-| 4 | Over $750,000 up to $1,000,000 | 30% |
-| 5 | Over $1,000,000 | 35% |
+| 1 | First $250,000 | 20% |
+| 2 | Over $250,000 up to $500,000 | 25% |
+| 3 | Over $500,000 up to $750,000 | 30% |
+| 4 | Over $750,000 | 35% (cap) |
 
-- Sample full-year payout at 45% gross margin: $16,875 + $22,500 + $28,125 + $33,750 per $250K band = **$101,250 cumulative at $1M revenue**; each additional $250K above $1M pays $39,375.
+- Sample full-year payout at 45% gross margin: $22,500 + $28,125 + $33,750 + $39,375 per $250K band = **$123,750 cumulative at $1M revenue**; each additional $250K pays $39,375 (rate capped at 35%).
 - Tier rate(s) for an engagement lock at pricing-worksheet approval and are stated on the worksheet with the CGP.
 
 ## Why this model

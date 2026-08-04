@@ -16,10 +16,10 @@ Establishes the terms under which the Sales Representative earns commissions on 
 4. **"Commissionable Gross Profit" ("CGP")** — the estimated gross profit established and approved by MMG Global LLC at the time a customer proposal or statement of work is approved. CGP equals the Approved Contract Value less the Approved Direct Delivery Costs identified in the Approved Pricing Worksheet. Once approved, CGP remains **fixed** for commission purposes and shall **not** be adjusted for actual project costs, internal efficiencies, write-offs, scope changes, or project profitability, unless the customer contract value is increased or decreased through an approved Change Order.
 5. **"Change Order"** — a written modification to a customer contract, approved by MMG management and the customer, that increases or decreases the Approved Contract Value; triggers a revised Approved Pricing Worksheet, applied prospectively.
 6. **"Gross Profit"** — for commission purposes, the Commissionable Gross Profit (CGP) as defined above — Approved Contract Value less Approved Direct Delivery Costs per the Approved Pricing Worksheet. Always the locked CGP figure, never actual or accounting gross profit.
-7. **"Named Account"** — a customer account expressly assigned to the Sales Representative in writing by MMG (Exhibit B, as amended in writing). Commissions under Section 4 are earned **only** on Named Account engagements.
-8. **"House Account" / "Other Sales Account"** — every account that is not a Named Account of the Sales Representative. No commission unless set out in a separate signed written schedule.
+7. **"Named and Approved Account"** — a customer account, or a defined portion of one (division, business unit, buying group, or opportunity), that the rep has requested in writing and MMG has expressly approved in writing as commissionable (recorded in Exhibit B). MMG may grant, deny, scope, condition, or prospectively revoke approval in its sole discretion; approving a portion of an account does not make the rest commissionable. Commissions under Section 4 are earned **only** on Named and Approved Account engagements.
+8. **Default — no commission without approval.** Every account or portion of an account that is not a Named and Approved Account is non-commissionable; MMG needs no writing or designation to keep it that way.
 9. **"Plan Year"** — the calendar year; the tier schedule's cumulative revenue resets to zero each Plan Year.
-10. **"Cumulative Named-Account Revenue"** — running total of Approved Contract Value of the rep's Named Account engagements approved during the Plan Year, in worksheet-approval order.
+10. **"Cumulative Named-Account Revenue"** — running total of Approved Contract Value of the rep's Named and Approved Account engagements approved during the Plan Year, in worksheet-approval order.
 11. **"Commission Rate"** — the incremental tier rate(s) in Section 4.2, applied to Gross Profit (CGP).
 12. **"Net Customer Payment"** — amounts actually received by MMG from the customer, net of refunds, credits, and chargebacks.
 
@@ -35,28 +35,27 @@ Establishes the terms under which the Sales Representative earns commissions on 
 
 Over or under budget, commission on this engagement is calculated on $45,000.
 
-## 4. Commission Plan — Named Accounts
+## 4. Commission Plan — Named and Approved Accounts
 
-1. **Scope.** Commissions are earned only on Named Account engagements sold by the rep and accepted by MMG. House Accounts and Other Sales Accounts carry no commission unless separately agreed in writing.
-2. **Incremental tier schedule.** Rates are incremental (marginal): each rate applies only to the Gross Profit (CGP) attributable to revenue in that band; crossing a threshold never retroactively reprices earlier revenue. Engagements spanning a threshold are apportioned pro-rata.
+1. **Scope — approval required.** Commissions are earned only on Named and Approved Account engagements sold by the rep and accepted by MMG. The rep must request account approval in writing before pursuing commissionable business; MMG may approve, deny, or scope the request (including limiting it to a division, business unit, buying group, or opportunity within a larger account) in its sole discretion. All other business is non-commissionable by default.
+2. **Incremental tier schedule.** Starts at 20%, capped at 35%. Rates are incremental (marginal): each rate applies only to the Gross Profit (CGP) attributable to revenue in that band; crossing a threshold never retroactively reprices earlier revenue. Engagements spanning a threshold are apportioned pro-rata.
 
 | Tier | Cumulative Named-Account Revenue (Plan Year) | Rate (% of Gross Profit) |
 |---|---|---|
-| 1 | First $250,000 | 15% |
-| 2 | Over $250,000 up to $500,000 | 20% |
-| 3 | Over $500,000 up to $750,000 | 25% |
-| 4 | Over $750,000 up to $1,000,000 | 30% |
-| 5 | Over $1,000,000 | 35% |
+| 1 | First $250,000 | 20% |
+| 2 | Over $250,000 up to $500,000 | 25% |
+| 3 | Over $500,000 up to $750,000 | 30% |
+| 4 | Over $750,000 | 35% (cap) |
 
 3. **Sample payout** (illustration — assumes Gross Profit = 45% of contract value in every band):
 
 | Revenue band | Revenue in band | Gross Profit in band (45%) | Rate | Commission in band | Cumulative commission |
 |---|---|---|---|---|---|
-| $0 – $250,000 | $250,000 | $112,500 | 15% | $16,875 | $16,875 |
-| $250,000 – $500,000 | $250,000 | $112,500 | 20% | $22,500 | $39,375 |
-| $500,000 – $750,000 | $250,000 | $112,500 | 25% | $28,125 | $67,500 |
-| $750,000 – $1,000,000 | $250,000 | $112,500 | 30% | $33,750 | $101,250 |
-| $1,000,000 – $1,250,000 | $250,000 | $112,500 | 35% | $39,375 | $140,625 |
+| $0 – $250,000 | $250,000 | $112,500 | 20% | $22,500 | $22,500 |
+| $250,000 – $500,000 | $250,000 | $112,500 | 25% | $28,125 | $50,625 |
+| $500,000 – $750,000 | $250,000 | $112,500 | 30% | $33,750 | $84,375 |
+| $750,000 – $1,000,000 | $250,000 | $112,500 | 35% | $39,375 | $123,750 |
+| $1,000,000 – $1,250,000 | $250,000 | $112,500 | 35% (cap) | $39,375 | $163,125 |
 
 4. The applicable tier rate(s) for an engagement are fixed at worksheet approval, based on Cumulative Named-Account Revenue at that time, and stated on the worksheet alongside the CGP.
 5. No commission accrues on any proposal that lacks an Approved Pricing Worksheet; MMG prepares one for every proposal before it goes to the customer.
@@ -69,7 +68,7 @@ Over or under budget, commission on this engagement is calculated on $45,000.
 2. **Paid** no later than the last day of the month following the month the corresponding payment is received.
 3. Non-payment: commission is due only on amounts actually received; advances on refunded/charged-back amounts are offset against future commissions.
 4. Change Orders: CGP recalculated per the revised worksheet, applied prospectively.
-5. House accounts and splits: documented in a written schedule approved before proposal approval.
+5. Splits between reps on a Named and Approved Account: documented in a written schedule approved before proposal approval.
 
 ## 6. Termination
 
@@ -112,11 +111,11 @@ All non-public MMG information — pricing worksheets, cost structures, commissi
 | Commission at approval | $ |
 | Management approval (name / date) | |
 
-## Exhibit B — Named Accounts
+## Exhibit B — Named and Approved Accounts
 
-Accounts assigned to the Sales Representative for commission purposes. All accounts not listed are House Accounts or Other Sales Accounts. MMG may amend this list in writing.
+Accounts (or scoped portions of accounts) requested by the rep and approved in writing by MMG as commissionable. Anything not listed is non-commissionable by default. MMG may amend this list in writing at its sole discretion.
 
-| Named Account | Effective date | Notes |
+| Named and Approved Account | Approved scope (whole account / division / opportunity) | Approval date |
 |---|---|---|
 | | | |
 | | | |
