@@ -69,6 +69,6 @@ No arguments. No recalculations. No surprises.
 
 ## Related documents
 
-- `MMG — Sales Commission Agreement — v1.html` (branded, signature-ready template, this folder)
-- `MMG — Sales Commission Agreement — v1.md` (markdown reference copy)
+- `MMG — Sales Commission Agreement — v1.html` / `.md` — **master template** (blank Sales Representative fields). Keep this as the source; do not overwrite with a named rep's terms.
+- `MMG — Sales Commission Agreement — Jeff Gibbs — v1.html` / `.md` — **execution copy** for Jeff Gibbs (CRO), generated from the master template 2026-08-04. Pattern: for each new rep, copy the master template and fill in name/title — never edit the master in place with a person's name.
 - Pricing tiers and deal terms: `03 — Pricing and Deal Reference`
