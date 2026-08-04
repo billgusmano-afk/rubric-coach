@@ -49,17 +49,15 @@ No arguments. No recalculations. No surprises.
 ## Commission rates — incremental tiers, Named and Approved Accounts only (Bill, 2026-08-03)
 
 - Commissions apply **only to Named and Approved Accounts** — the rep must request an account (or a scoped portion: division, business unit, buying group, or opportunity) in writing, and MMG approves or denies at its sole discretion (contract Exhibit B). **Everything else is non-commissionable by default** — no writing or designation needed from MMG. Rationale: on very large existing accounts (e.g. Brocade) MMG may commission only the group where the rep is actively driving new business (e.g. the marketing department Jeff is selling into), not the whole relationship.
-- Rates are **incremental (marginal)** on Gross Profit (= CGP), starting at 25% and capped at 35% (cap reached over $1M), stepping up with cumulative Named-Account revenue in the calendar Plan Year (resets annually):
+- Rates are **incremental (marginal)** on Gross Profit (= CGP), starting at 25% and capped at 35% (cap reached over $500K), stepping up with cumulative Named-Account revenue in the calendar Plan Year (resets annually):
 
 | Tier | Cumulative Named-Account Revenue | Rate (% of Gross Profit) |
 |---|---|---|
 | 1 | First $250,000 | 25% |
-| 2 | Over $250,000 up to $500,000 | 27.5% |
-| 3 | Over $500,000 up to $750,000 | 30% |
-| 4 | Over $750,000 up to $1,000,000 | 32.5% |
-| 5 | Over $1,000,000 | 35% (cap) |
+| 2 | Over $250,000 up to $500,000 | 30% |
+| 3 | Over $500,000 | 35% (cap) |
 
-- Sample full-year payout at 45% gross margin: $28,125 + $30,938 + $33,750 + $36,563 per $250K band = **$129,375 cumulative at $1M revenue**; each additional $250K pays $39,375 (rate capped at 35%). Rates chosen 2026-08-04 (Bill) after market check: at 45% margin this pays ~11–16% of revenue, in line with agency/creative-services benchmarks (10–20% of contract value).
+- Sample full-year payout at 45% gross margin: $28,125 (tier 1) + $33,750 (tier 2) + $39,375 per $250K thereafter = **$140,625 cumulative at $1M revenue**. Rates simplified to 3 bands 2026-08-04 (Bill) to make the plan richer; at 45% margin this pays ~11.25–15.75% of revenue, in line with agency/creative-services benchmarks (10–20% of contract value).
 - Tier rate(s) for an engagement lock at pricing-worksheet approval and are stated on the worksheet with the CGP.
 
 ## Why this model
