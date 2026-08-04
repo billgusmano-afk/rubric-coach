@@ -38,24 +38,25 @@ Over or under budget, commission on this engagement is calculated on $45,000.
 ## 4. Commission Plan — Named and Approved Accounts
 
 1. **Scope — approval required.** Commissions are earned only on Named and Approved Account engagements sold by the rep and accepted by MMG. The rep must request account approval in writing before pursuing commissionable business; MMG may approve, deny, or scope the request (including limiting it to a division, business unit, buying group, or opportunity within a larger account) in its sole discretion. All other business is non-commissionable by default.
-2. **Incremental tier schedule.** Starts at 20%, capped at 35%. Rates are incremental (marginal): each rate applies only to the Gross Profit (CGP) attributable to revenue in that band; crossing a threshold never retroactively reprices earlier revenue. Engagements spanning a threshold are apportioned pro-rata.
+2. **Incremental tier schedule.** Starts at 25%, capped at 35% (reached once cumulative revenue exceeds $1,000,000). Rates are incremental (marginal): each rate applies only to the Gross Profit (CGP) attributable to revenue in that band; crossing a threshold never retroactively reprices earlier revenue. Engagements spanning a threshold are apportioned pro-rata.
 
 | Tier | Cumulative Named-Account Revenue (Plan Year) | Rate (% of Gross Profit) |
 |---|---|---|
-| 1 | First $250,000 | 20% |
-| 2 | Over $250,000 up to $500,000 | 25% |
+| 1 | First $250,000 | 25% |
+| 2 | Over $250,000 up to $500,000 | 27.5% |
 | 3 | Over $500,000 up to $750,000 | 30% |
-| 4 | Over $750,000 | 35% (cap) |
+| 4 | Over $750,000 up to $1,000,000 | 32.5% |
+| 5 | Over $1,000,000 | 35% (cap) |
 
 3. **Sample payout** (illustration — assumes Gross Profit = 45% of contract value in every band):
 
 | Revenue band | Revenue in band | Gross Profit in band (45%) | Rate | Commission in band | Cumulative commission |
 |---|---|---|---|---|---|
-| $0 – $250,000 | $250,000 | $112,500 | 20% | $22,500 | $22,500 |
-| $250,000 – $500,000 | $250,000 | $112,500 | 25% | $28,125 | $50,625 |
-| $500,000 – $750,000 | $250,000 | $112,500 | 30% | $33,750 | $84,375 |
-| $750,000 – $1,000,000 | $250,000 | $112,500 | 35% | $39,375 | $123,750 |
-| $1,000,000 – $1,250,000 | $250,000 | $112,500 | 35% (cap) | $39,375 | $163,125 |
+| $0 – $250,000 | $250,000 | $112,500 | 25% | $28,125 | $28,125 |
+| $250,000 – $500,000 | $250,000 | $112,500 | 27.5% | $30,938 | $59,063 |
+| $500,000 – $750,000 | $250,000 | $112,500 | 30% | $33,750 | $92,813 |
+| $750,000 – $1,000,000 | $250,000 | $112,500 | 32.5% | $36,563 | $129,375 |
+| $1,000,000 – $1,250,000 | $250,000 | $112,500 | 35% (cap) | $39,375 | $168,750 |
 
 4. The applicable tier rate(s) for an engagement are fixed at worksheet approval, based on Cumulative Named-Account Revenue at that time, and stated on the worksheet alongside the CGP.
 5. No commission accrues on any proposal that lacks an Approved Pricing Worksheet; MMG prepares one for every proposal before it goes to the customer.
