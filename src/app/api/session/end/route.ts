@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getPresetCriteria } from "@/lib/frameworks";
+import { getPresetCriteria, PRESET_FRAMEWORKS } from "@/lib/frameworks";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -16,7 +16,32 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { session_id, duration_seconds, final_scores, framework_ids } = body;
+  const { session_id, duration_seconds, final_scores } = body;
+
+  // Load the session server-side and verify ownership — never trust
+  // session_id/framework_ids from the client (tamper-proof, same pattern
+  // as src/app/api/session/message/route.ts). Also guard against a
+  // client re-submitting /end on an already-finished session, which would
+  // re-insert duplicate scores and let arbitrary final_scores inflate the
+  // record.
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("id, framework_ids, preset_framework_ids, ended_at")
+    .eq("id", session_id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!session) {
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  }
+  if (session.ended_at) {
+    return NextResponse.json({ error: "Session has already ended" }, { status: 400 });
+  }
+
+  const framework_ids = [
+    ...(session.preset_framework_ids || []),
+    ...(session.framework_ids || []),
+  ];
 
   // Get conversation history
   const { data: messages } = await supabase
@@ -68,16 +93,73 @@ export async function POST(request: Request) {
       overallScore = Math.round(weightedSum / (totalWeight / 100));
     }
 
-    // Save session scores (only for DB framework criteria — preset ones don't have DB criterion records)
-    for (const fs of final_scores) {
-      const isPreset = presetCriteriaList.some((c) => c.id === fs.criterion_id);
-      if (!isPreset) {
-        await supabase.from("session_scores").insert({
+    // Save session scores for BOTH kinds of criteria.
+    // Preset criteria have no rows in public.criteria, so persist their
+    // identity/name/weight inline (see migration 005_preset_scores.sql).
+    const criterionToFramework = new Map<string, string>();
+    for (const fw of PRESET_FRAMEWORKS) {
+      for (const c of fw.criteria) criterionToFramework.set(c.id, fw.id);
+    }
+
+    const rows: {
+      session_id: string;
+      criterion_id: string | null;
+      preset_framework_id: string | null;
+      preset_criterion_id: string | null;
+      preset_criterion_name: string | null;
+      weight_percent: number | null;
+      score: number;
+      ai_feedback: string | null;
+    }[] = [];
+
+    for (const fs of final_scores as { criterion_id: string; score: number; feedback?: string }[]) {
+      const preset = presetCriteriaList.find((c) => c.id === fs.criterion_id);
+      if (preset) {
+        rows.push({
           session_id,
-          criterion_id: fs.criterion_id,
+          criterion_id: null,
+          preset_framework_id: criterionToFramework.get(preset.id) ?? null,
+          preset_criterion_id: preset.id,
+          preset_criterion_name: preset.name,
+          weight_percent: preset.weight_percent,
           score: fs.score,
           ai_feedback: fs.feedback || null,
         });
+        continue;
+      }
+
+      const dbCriterion = dbCriteriaList.find((c) => c.id === fs.criterion_id);
+      if (dbCriterion) {
+        rows.push({
+          session_id,
+          criterion_id: fs.criterion_id,
+          preset_framework_id: null,
+          preset_criterion_id: null,
+          preset_criterion_name: null,
+          weight_percent: dbCriterion.weight_percent ?? null,
+          score: fs.score,
+          ai_feedback: fs.feedback || null,
+        });
+        continue;
+      }
+
+      // Score entry doesn't match a known DB criterion or preset criterion
+      // (e.g. client sent an inconsistent framework_id). Skip it instead of
+      // inserting a raw string into the uuid criterion_id column, which
+      // would throw a Postgres cast error and reject the entire batch.
+      console.error(
+        `session/end: score entry for unknown criterion_id "${fs.criterion_id}" on session ${session_id} — skipping`
+      );
+    }
+
+    if (rows.length > 0) {
+      const { error: insertError } = await supabase.from("session_scores").insert(rows);
+      if (insertError) {
+        console.error(`session/end: failed to insert session_scores for session ${session_id}:`, insertError);
+        return NextResponse.json(
+          { error: "Failed to save session scores", details: insertError.message },
+          { status: 500 }
+        );
       }
     }
   }

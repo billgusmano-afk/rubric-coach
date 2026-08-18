@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMG Coach Studio — Practice session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#FF97A9;
+    --ink:#1D1D1B;
+    --white:#FFFFFF;
+    --bg:#FDF5F6;
+    --lavender:#8A5FBE;
+    --grad:linear-gradient(45deg,#FF8BAE 20%,#FF8F8B 80%);
+    --border:rgba(29,29,27,.10);
+    --shadow:0 2px 6px rgba(29,29,27,.05), 0 10px 26px rgba(29,29,27,.07);
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{
+    font-family:'Open Sans',Arial,sans-serif;color:var(--ink);
+    background:var(--bg);font-size:15px;line-height:1.55;min-height:100vh;
+  }
+  h1,h2,h3{font-family:'Source Serif Pro','Source Serif 4',Georgia,serif;font-weight:600;}
+  .btn{
+    display:inline-block;border-radius:999px;font-weight:700;font-size:14.5px;
+    padding:12px 24px;text-decoration:none;border:none;cursor:pointer;
+    font-family:'Open Sans',Arial,sans-serif;
+  }
+  .btn-ink{background:var(--ink);color:var(--white);}
+  .btn-block{display:block;width:100%;text-align:center;}
+
+  /* ============ Top bar ============ */
+  .topbar{
+    background:var(--white);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:20px;padding:0 24px;height:64px;
+    position:sticky;top:0;z-index:10;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding-right:20px;border-right:1px solid var(--border);}
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;background:var(--pink);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif Pro',Georgia,serif;font-weight:700;font-size:17px;
+  }
+  .brand b{font-size:14.5px;white-space:nowrap;}
+  .scenario-id{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
+  .scenario-id h1{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;background:var(--pink);
+    border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;white-space:nowrap;
+  }
+  .chip-lav{background:rgba(138,95,190,.16);}
+  .timer{
+    display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--white);
+    border-radius:999px;padding:8px 18px;font-weight:700;font-size:15px;
+    font-variant-numeric:tabular-nums;letter-spacing:.04em;
+  }
+  .timer .rec{width:9px;height:9px;border-radius:50%;background:var(--pink);animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ============ Scenario strip ============ */
+  .strip{
+    background:var(--white);border-bottom:1px solid var(--border);
+    padding:12px 24px;
+  }
+  .strip-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .strip-head span{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.6;}
+  .strip-head a{font-size:12.5px;font-weight:700;color:var(--ink);}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .scard{
+    border:1px solid var(--border);border-radius:12px;padding:12px 16px;
+    background:var(--white);cursor:pointer;
+  }
+  .scard b{display:block;font-size:13px;margin-bottom:3px;}
+  .scard small{display:block;font-size:11.5px;opacity:.65;}
+  .scard .tag{
+    display:inline-block;margin-top:8px;font-size:10.5px;font-weight:700;
+    background:rgba(29,29,27,.06);border-radius:999px;padding:3px 10px;
+  }
+  .scard.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+  .scard.active small{opacity:.75;}
+  .scard.active .tag{background:var(--pink);color:var(--ink);}
+
+  /* ============ Main layout ============ */
+  .layout{
+    display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;
+    max-width:1280px;margin:0 auto;padding:20px 24px 32px;
+    align-items:start;
+  }
+
+  /* ---- Chat panel ---- */
+  .chat-panel{
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;
+  }
+  .chat-head{
+    display:flex;align-items:center;gap:16px;padding:18px 22px;
+    border-bottom:1px solid var(--border);background:var(--bg);
+  }
+  .avatar-wrap{position:relative;width:64px;height:64px;flex:none;}
+  .avatar{
+    width:64px;height:64px;border-radius:50%;background:var(--ink);color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif Pro',Georgia,serif;font-weight:700;font-size:22px;
+  }
+  .speak-ring{
+    position:absolute;inset:-6px;border-radius:50%;
+    border:3px solid var(--pink);animation:pulse 1.8s ease-out infinite;
+  }
+  .speak-ring.r2{inset:-11px;border-width:2px;opacity:.5;animation-delay:.4s;}
+  @keyframes pulse{
+    0%{transform:scale(.96);opacity:.9}
+    70%{transform:scale(1.05);opacity:.35}
+    100%{transform:scale(.96);opacity:.9}
+  }
+  .persona b{display:block;font-size:16px;}
+  .persona small{display:block;font-size:12.5px;opacity:.65;}
+  .speaking-chip{
+    margin-left:auto;display:flex;align-items:center;gap:8px;
+    background:var(--white);border:1px solid var(--border);border-radius:999px;
+    padding:7px 16px;font-size:12px;font-weight:700;
+  }
+  .eq{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .eq i{width:3px;background:var(--pink);border-radius:2px;animation:eq 1s infinite ease-in-out;}
+  .eq i:nth-child(1){height:6px;}
+  .eq i:nth-child(2){height:12px;animation-delay:.15s;}
+  .eq i:nth-child(3){height:8px;animation-delay:.3s;}
+  .eq i:nth-child(4){height:11px;animation-delay:.45s;}
+  @keyframes eq{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+
+  .chat-body{padding:24px 22px;display:flex;flex-direction:column;gap:16px;min-height:420px;}
+  .msg{display:flex;gap:10px;max-width:78%;}
+  .msg .mini{
+    width:30px;height:30px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  }
+  .msg-ai{align-self:flex-start;}
+  .msg-ai .mini{background:var(--ink);color:var(--white);}
+  .msg-rep{align-self:flex-end;flex-direction:row-reverse;}
+  .msg-rep .mini{background:var(--pink);}
+  .bubble{border-radius:14px;padding:13px 17px;font-size:14.5px;}
+  .msg-ai .bubble{background:var(--bg);border:1px solid var(--border);border-top-left-radius:4px;}
+  .msg-rep .bubble{background:var(--pink);border-top-right-radius:4px;}
+  .msg time{display:block;font-size:10.5px;opacity:.5;margin-top:5px;}
+  .typing .bubble{display:flex;gap:5px;align-items:center;padding:15px 18px;}
+  .typing .bubble i{width:7px;height:7px;border-radius:50%;background:rgba(29,29,27,.4);animation:eq 1.2s infinite;}
+  .typing .bubble i:nth-child(2){animation-delay:.2s}
+  .typing .bubble i:nth-child(3){animation-delay:.4s}
+
+  .chat-input{
+    display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--border);background:var(--white);
+  }
+  .chat-input input{
+    flex:1;border:2px solid var(--ink);border-radius:999px;padding:12px 20px;
+    font-size:14.5px;font-family:'Open Sans',Arial,sans-serif;background:var(--white);color:var(--ink);
+  }
+  .chat-input input::placeholder{color:rgba(29,29,27,.45);}
+  .mic{
+    width:46px;height:46px;border-radius:50%;background:var(--pink);border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .mic svg{width:20px;height:20px;fill:var(--ink);}
+  .send{
+    border-radius:999px;background:var(--ink);color:var(--white);border:none;
+    font-weight:700;font-size:14px;padding:0 24px;cursor:pointer;font-family:'Open Sans',Arial,sans-serif;
+  }
+
+  /* ---- Right rail ---- */
+  .rail{display:flex;flex-direction:column;gap:16px;}
+  .card{
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;
+  }
+  .card h2{font-size:17px;margin-bottom:4px;}
+  .card .sub{font-size:12px;opacity:.6;margin-bottom:18px;}
+  .live-dot{
+    display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pink);
+    margin-right:7px;animation:blink 1.6s infinite;
+  }
+  .crit{margin-bottom:18px;}
+  .crit:last-of-type{margin-bottom:0;}
+  .crit-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;}
+  .crit-top b{font-size:13.5px;}
+  .crit-top .w{font-size:11px;opacity:.55;font-weight:600;margin-left:6px;}
+  .crit-top .score{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .track{position:relative;height:12px;border-radius:99px;background:rgba(29,29,27,.08);}
+  .fill{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--grad);}
+  .ticks{display:flex;justify-content:space-between;font-size:9.5px;opacity:.45;margin-top:4px;padding:0 1px;font-weight:600;}
+  .avg{
+    margin-top:20px;padding-top:18px;border-top:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .avg span{font-size:13px;font-weight:600;opacity:.75;}
+  .avg small{display:block;font-size:11px;opacity:.55;font-weight:400;}
+  .avg b{font-family:'Source Serif Pro',Georgia,serif;font-size:38px;font-weight:700;line-height:1;}
+  .avg b small{display:inline;font-size:16px;opacity:.45;}
+
+  .tip{background:rgba(138,95,190,.10);border:1px solid rgba(138,95,190,.30);}
+  .tip-label{
+    display:inline-block;background:var(--lavender);color:var(--white);
+    font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    border-radius:999px;padding:4px 12px;margin-bottom:12px;
+  }
+  .tip p{font-size:14px;line-height:1.6;}
+  .tip p b{font-weight:700;}
+
+  /* ============ Print & responsive ============ */
+  @media (max-width:1024px){
+    .layout{grid-template-columns:minmax(0,1fr) 320px;}
+    .cards{grid-template-columns:repeat(4,1fr);}
+    .scard small{white-space:normal;}
+  }
+  @media print{
+    body{background:var(--white);}
+    .topbar{position:static;}
+    .chat-panel,.card{box-shadow:none;}
+    .speak-ring,.eq i,.timer .rec,.live-dot{animation:none;}
+    .layout{padding:12px 0;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">M</div>
+    <b>MMG Coach Studio</b>
+  </div>
+  <div class="scenario-id">
+    <h1>Cold discovery — Jordan Mercer, VP Ops</h1>
+    <span class="chip">Challenger</span>
+    <span class="chip chip-lav">Difficulty: Hard</span>
+  </div>
+  <div class="timer"><span class="rec"></span>07:42</div>
+</header>
+
+<!-- ============ SCENARIO STRIP (collapsed picker) ============ -->
+<div class="strip">
+  <div class="strip-head">
+    <span>Choose a scenario</span>
+    <a href="#">Browse all 24 →</a>
+  </div>
+  <div class="cards">
+    <div class="scard active">
+      <b>Cold discovery</b>
+      <small>Skeptical VP Ops · manufacturing</small>
+      <span class="tag">Challenger</span>
+    </div>
+    <div class="scard">
+      <b>Renewal save</b>
+      <small>Price-pressured CFO · SaaS</small>
+      <span class="tag">SPIN</span>
+    </div>
+    <div class="scard">
+      <b>Demo follow-up</b>
+      <small>Silent champion · healthcare IT</small>
+      <span class="tag">MEDDIC</span>
+    </div>
+    <div class="scard">
+      <b>Objection gauntlet</b>
+      <small>Procurement lead · enterprise</small>
+      <span class="tag">Sandler</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<main class="layout">
+
+  <!-- ---- Chat with the AI customer ---- -->
+  <section class="chat-panel" aria-label="Role-play conversation">
+    <div class="chat-head">
+      <div class="avatar-wrap">
+        <span class="speak-ring"></span>
+        <span class="speak-ring r2"></span>
+        <div class="avatar">JM</div>
+      </div>
+      <div class="persona">
+        <b>Jordan Mercer</b>
+        <small>VP of Operations · Corvid Manufacturing · 11 yrs in role</small>
+      </div>
+      <div class="speaking-chip">
+        <span class="eq"><i></i><i></i><i></i><i></i></span>
+        Speaking
+      </div>
+    </div>
+
+    <div class="chat-body">
+      <div class="msg msg-ai">
+        <span class="mini">JM</span>
+        <div>
+          <div class="bubble">Look, I'll be straight with you — I get fifteen of these calls a week. We already run Tack for line scheduling and nobody here is asking me to change it. What exactly is different about this?</div>
+          <time>07:12</time>
+        </div>
+      </div>
+
+      <div class="msg msg-rep">
+        <span class="mini">You</span>
+        <div>
+          <div class="bubble">That's fair, and I'm not going to pretend Tack is broken. But here's what surprised the last three ops teams we worked with: scheduling wasn't their problem — rework after schedule changes was. When a line shifts mid-week, how does that ripple through your team today?</div>
+          <time>07:31</time>
+        </div>
+      </div>
+
+      <div class="msg msg-ai">
+        <span class="mini">JM</span>
+        <div>
+          <div class="bubble">Hm. Mid-week changes are… not pretty. My supervisors basically rebuild the plan by hand. But that's just manufacturing — every vendor promises to fix it and none of them survive contact with our floor.</div>
+          <time>07:58</time>
+        </div>
+      </div>
+
+      <div class="msg msg-rep">
+        <span class="mini">You</span>
+        <div>
+          <div class="bubble">How many hours would you guess your supervisors lose to those rebuilds in a bad week?</div>
+          <time>08:20</time>
+        </div>
+      </div>
+
+      <div class="msg msg-ai typing">
+        <span class="mini">JM</span>
+        <div class="bubble"><i></i><i></i><i></i></div>
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <button class="mic" aria-label="Speak your reply">
+        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2z"/></svg>
+      </button>
+      <input type="text" placeholder="Type your reply, or hold the mic to speak…" aria-label="Your reply">
+      <button class="send">Send</button>
+    </div>
+  </section>
+
+  <!-- ---- Right rail: live rubric + coaching ---- -->
+  <aside class="rail">
+    <div class="card" aria-label="Live rubric">
+      <h2><span class="live-dot"></span>Live rubric</h2>
+      <p class="sub">Challenger method · scored every exchange</p>
+
+      <div class="crit">
+        <div class="crit-top"><span><b>Discovery questions</b><span class="w">30%</span></span><span class="score">4.0 / 5</span></div>
+        <div class="track"><div class="fill" style="width:80%"></div></div>
+        <div class="ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      </div>
+
+      <div class="crit">
+        <div class="crit-top"><span><b>Objection handling</b><span class="w">25%</span></span><span class="score">3.5 / 5</span></div>
+        <div class="track"><div class="fill" style="width:70%"></div></div>
+        <div class="ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      </div>
+
+      <div class="crit">
+        <div class="crit-top"><span><b>Value framing</b><span class="w">25%</span></span><span class="score">4.5 / 5</span></div>
+        <div class="track"><div class="fill" style="width:90%"></div></div>
+        <div class="ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      </div>
+
+      <div class="crit">
+        <div class="crit-top"><span><b>Next-step close</b><span class="w">20%</span></span><span class="score">2.5 / 5</span></div>
+        <div class="track"><div class="fill" style="width:50%"></div></div>
+        <div class="ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      </div>
+
+      <div class="avg">
+        <span>Session average<small>weighted</small></span>
+        <b>3.7<small> / 5</small></b>
+      </div>
+    </div>
+
+    <div class="card tip" aria-label="Coaching tip">
+      <span class="tip-label">Coach's tip</span>
+      <p>Strong reframe on rework — you taught Jordan something. Now <b>quantify it before he does</b>: get a number on those lost hours, then tie your next question to what that costs per quarter. You haven't earned the close yet, so don't rush it.</p>
+    </div>
+
+    <a class="btn btn-ink btn-block" href="#">Finish &amp; get my scorecard</a>
+  </aside>
+
+</main>
+
+</body>
+</html>

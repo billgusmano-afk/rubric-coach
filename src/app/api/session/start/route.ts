@@ -80,36 +80,7 @@ export async function POST(request: Request) {
   const presetIds = ["human-edge", "financial-acumen", "challenger-sale", "meddic", "strategic-mgmt"];
   const allFrameworkIds = framework_ids || [];
   const dbFrameworkIds = allFrameworkIds.filter((id: string) => !presetIds.includes(id));
-
-  // Create the session record — only store real UUIDs in the uuid[] column
-  const { data: session, error } = await supabase
-    .from("sessions")
-    .insert({
-      user_id: user.id,
-      company_name,
-      client_contact,
-      partner_name,
-      partner_role,
-      partner_solution,
-      relationship_stage,
-      meeting_type: meeting_type,
-      proposal,
-      objective,
-      expected_objection,
-      disc_profile,
-      disc_blend,
-      framework_ids: dbFrameworkIds,
-      document_context,
-      voice_enabled: voice_enabled ?? true,
-      mic_enabled: mic_enabled ?? false,
-      scenario_type: meeting_type, // backward compat
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const presetFrameworkIds = allFrameworkIds.filter((id: string) => presetIds.includes(id));
 
   // Build the AI client persona system prompt
   const contactName = client_contact || "the client executive";
@@ -162,6 +133,41 @@ INSTRUCTIONS FOR YOUR CHARACTER:
 
 Start by greeting the sales rep and setting the tone for a ${meeting_type || "meeting"}.`;
 
+  // Create the session record — only store real UUIDs in the uuid[] column.
+  // system_prompt is persisted server-side so /api/session/message never has
+  // to trust a client-supplied prompt.
+  const { data: session, error } = await supabase
+    .from("sessions")
+    .insert({
+      user_id: user.id,
+      company_name,
+      client_contact,
+      partner_name,
+      partner_role,
+      partner_solution,
+      relationship_stage,
+      meeting_type: meeting_type,
+      proposal,
+      objective,
+      expected_objection,
+      disc_profile,
+      disc_blend,
+      framework_ids: dbFrameworkIds,
+      preset_framework_ids: presetFrameworkIds,
+      company_research: company_research || null,
+      document_context,
+      voice_enabled: voice_enabled ?? true,
+      mic_enabled: mic_enabled ?? false,
+      scenario_type: meeting_type, // backward compat
+      system_prompt: systemPrompt,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
   // Generate opening message
   try {
     const message = await anthropic.messages.create({
@@ -190,14 +196,18 @@ Start by greeting the sales rep and setting the tone for a ${meeting_type || "me
     return NextResponse.json({
       session_id: session.id,
       opening_message: openingMessage,
-      system_prompt: systemPrompt,
     });
   } catch (error) {
     console.error("AI error:", error);
+    const fallbackMessage = `Hi, I'm ${contactName} from ${company_name}. I have about 20 minutes — what did you want to discuss?`;
+    await supabase.from("session_messages").insert({
+      session_id: session.id,
+      role: "assistant",
+      content: fallbackMessage,
+    });
     return NextResponse.json({
       session_id: session.id,
-      opening_message: `Hi, I'm ${contactName} from ${company_name}. I have about 20 minutes — what did you want to discuss?`,
-      system_prompt: systemPrompt,
+      opening_message: fallbackMessage,
     });
   }
 }

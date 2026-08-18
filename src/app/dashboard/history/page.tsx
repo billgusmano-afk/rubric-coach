@@ -34,12 +34,15 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+// Score band -> chip classes. Text stays black/neutral (text-ink / text-ink-3)
+// per the brand rule (text/icons black or white only); the semantic
+// good/ok/bad distinction is carried by the background color instead.
 function scoreColor(score: number | null): string {
   if (!score) return "text-ink-3";
-  if (score >= 80) return "text-green";
-  if (score >= 65) return "text-accent";
-  if (score >= 50) return "text-gold";
-  return "text-red";
+  if (score >= 80) return "text-ink bg-green/15";
+  if (score >= 65) return "text-ink";
+  if (score >= 50) return "text-ink bg-gold/15";
+  return "text-ink bg-red/15";
 }
 
 
@@ -89,7 +92,7 @@ export default function HistoryPage() {
           <div className="text-sm text-ink-3 mb-5">Complete your first roleplay to see results here.</div>
           <button
             onClick={() => router.push("/dashboard/roleplay")}
-            className="px-5 py-2 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors"
+            className="px-5 py-2 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors"
           >
             Start a session
           </button>
@@ -100,8 +103,7 @@ export default function HistoryPage() {
           {latest && (
             <button
               onClick={() => router.push(`/dashboard/history/${latest.id}`)}
-              className="w-full text-left rounded-[12px] p-5 mb-4 text-white border-none hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(135deg, #5b4cf5 0%, #8b5cf6 100%)" }}
+              className="w-full text-left rounded-[12px] p-5 mb-4 text-ink bg-mmgGradient border-none hover:opacity-90 transition-opacity"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
@@ -154,7 +156,7 @@ export default function HistoryPage() {
                         {formatDate(s.created_at)} · {formatDuration(s.duration_seconds)} · DISC: {s.disc_profile || "D"}
                       </div>
                     </div>
-                    <div className={`text-xl font-bold ml-4 shrink-0 ${scoreColor(s.overall_score)}`}>
+                    <div className={`text-xl font-bold ml-4 shrink-0 px-2.5 py-0.5 rounded-full ${scoreColor(s.overall_score)}`}>
                       {s.overall_score ?? "—"}
                     </div>
                   </button>

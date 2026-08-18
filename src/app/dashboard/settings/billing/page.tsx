@@ -163,7 +163,7 @@ export default function BillingPage() {
             <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
               isFreePlan
                 ? "bg-surface text-ink-3"
-                : "bg-accent/10 text-accent"
+                : "bg-accent/20 text-ink"
             }`}>
               {isFreePlan ? "Free" : "Pro"}
             </span>
@@ -203,7 +203,7 @@ export default function BillingPage() {
             <button
               onClick={handleManagePlan}
               disabled={portalLoading}
-              className="mt-4 w-full py-2 bg-white text-accent border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors disabled:opacity-50"
+              className="mt-4 w-full py-2 bg-white text-ink border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors disabled:opacity-50"
             >
               {portalLoading ? "Loading..." : "Manage Plan"}
             </button>
@@ -264,12 +264,12 @@ export default function BillingPage() {
               <button
                 onClick={() => handleUpgrade(0)}
                 disabled={checkoutLoading}
-                className="w-full py-2 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors disabled:opacity-50"
+                className="w-full py-2 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors disabled:opacity-50"
               >
                 {checkoutLoading ? "Loading..." : "Upgrade to Pro"}
               </button>
             ) : (
-              <div className="text-center text-xs text-accent font-medium">Current Plan</div>
+              <div className="text-center text-xs text-ink font-medium">Current Plan</div>
             )}
           </div>
 
@@ -286,7 +286,7 @@ export default function BillingPage() {
             <button
               onClick={() => handleUpgrade(1)}
               disabled={checkoutLoading}
-              className="w-full py-2 bg-white text-accent border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors disabled:opacity-50"
+              className="w-full py-2 bg-white text-ink border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors disabled:opacity-50"
             >
               {checkoutLoading ? "Loading..." : "Add Framework"}
             </button>
@@ -305,7 +305,7 @@ export default function BillingPage() {
             <button
               onClick={() => handleUpgrade(2)}
               disabled={checkoutLoading}
-              className="w-full py-2 bg-white text-accent border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors disabled:opacity-50"
+              className="w-full py-2 bg-white text-ink border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors disabled:opacity-50"
             >
               {checkoutLoading ? "Loading..." : "Add 2 Frameworks"}
             </button>

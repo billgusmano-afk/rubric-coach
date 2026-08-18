@@ -16,7 +16,29 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { session_id, message, system_prompt, framework_ids } = body;
+  const { session_id, message } = body;
+
+  // Load the session server-side — the persona system prompt and framework
+  // selection come from the DB, never from the client (tamper-proof).
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("id, system_prompt, framework_ids, preset_framework_ids, ended_at")
+    .eq("id", session_id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!session) {
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  }
+  if (session.ended_at) {
+    return NextResponse.json({ error: "Session has ended" }, { status: 400 });
+  }
+
+  const system_prompt = session.system_prompt || "";
+  const framework_ids = [
+    ...(session.preset_framework_ids || []),
+    ...(session.framework_ids || []),
+  ];
 
   // Save user message
   await supabase.from("session_messages").insert({

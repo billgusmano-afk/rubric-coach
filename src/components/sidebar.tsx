@@ -42,9 +42,14 @@ export function Sidebar({ userName }: { userName: string }) {
 
   return (
     <nav className="w-[220px] bg-card border-r border-border p-6 flex flex-col gap-1.5 shrink-0">
-      <div className="flex items-center gap-2 mb-6 px-2">
-        <div className="w-2 h-2 bg-accent rounded-full" />
-        <span className="font-serif text-lg text-accent">RubricCoach</span>
+      <div className="mb-6 px-2">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-accent rounded-full" />
+          <span className="font-serif text-lg text-ink">MMG Coach Studio</span>
+        </div>
+        <div className="text-[10px] text-ink-3 leading-tight mt-1 pl-4">
+          Powered by The Motivated Mind Group
+        </div>
       </div>
 
       {navSections.map((section) => (
@@ -63,8 +68,8 @@ export function Sidebar({ userName }: { userName: string }) {
                 href={item.href}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-sm text-[13px] transition-all ${
                   isActive
-                    ? "bg-accent/[0.08] text-accent font-medium"
-                    : "text-ink-3 hover:bg-surface hover:text-ink"
+                    ? "bg-ink text-white font-medium"
+                    : "text-ink-3 hover:bg-accent/10 hover:text-ink"
                 }`}
               >
                 <span className="text-base w-5 text-center">{item.icon}</span>
@@ -77,10 +82,10 @@ export function Sidebar({ userName }: { userName: string }) {
 
       <div className="flex-1" />
 
-      <div className="p-3 bg-accent/[0.06] rounded-sm text-xs text-ink-3">
-        <div className="font-semibold text-accent mb-0.5">Pro Plan</div>
+      <div className="p-3 bg-accent/10 rounded-sm text-xs text-ink-3">
+        <div className="font-semibold text-ink mb-0.5">Pro Plan</div>
         2 of 3 frameworks used
-        <div className="mt-1.5 h-1.5 bg-surface rounded-full overflow-hidden">
+        <div className="mt-1.5 h-1.5 bg-white rounded-full overflow-hidden">
           <div className="h-full bg-accent rounded-full" style={{ width: "66%" }} />
         </div>
       </div>

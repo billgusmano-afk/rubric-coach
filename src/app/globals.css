@@ -1,11 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Source+Serif+Pro:wght@600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'DM Sans', sans-serif;
-  background: #f8f7fc;
-  color: #1a1a2e;
+  font-family: 'Open Sans', sans-serif;
+  background: #FDF5F6;
+  color: #1D1D1B;
+}
+
+/* MMG headlines: Source Serif Pro semibold */
+.font-serif {
+  font-weight: 600;
 }

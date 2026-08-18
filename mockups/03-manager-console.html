@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMG Coach Studio — Manager console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#FF97A9;
+    --ink:#1D1D1B;
+    --white:#FFFFFF;
+    --bg:#FDF5F6;
+    --lavender:#8A5FBE;
+    --grad:linear-gradient(45deg,#FF8BAE 20%,#FF8F8B 80%);
+    --border:rgba(29,29,27,.10);
+    --shadow:0 2px 6px rgba(29,29,27,.05), 0 10px 26px rgba(29,29,27,.07);
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{
+    font-family:'Open Sans',Arial,sans-serif;color:var(--ink);
+    background:var(--bg);font-size:14.5px;line-height:1.55;
+  }
+  h1,h2,h3{font-family:'Source Serif Pro','Source Serif 4',Georgia,serif;font-weight:600;}
+  .btn{
+    display:inline-block;border-radius:999px;font-weight:700;font-size:13.5px;
+    padding:10px 22px;text-decoration:none;border:none;cursor:pointer;
+    font-family:'Open Sans',Arial,sans-serif;
+  }
+  .btn-ink{background:var(--ink);color:var(--white);}
+  .btn-grad{background:var(--grad);color:var(--ink);box-shadow:0 4px 14px rgba(255,139,174,.4);}
+  .btn-block{display:block;width:100%;text-align:center;}
+
+  /* ============ Shell ============ */
+  .shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh;}
+
+  /* ---- Sidebar ---- */
+  .side{background:var(--ink);color:var(--white);padding:24px 18px;display:flex;flex-direction:column;gap:6px;}
+  .side .brand{display:flex;align-items:center;gap:11px;padding:4px 8px 22px;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:10px;background:var(--pink);flex:none;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif Pro',Georgia,serif;font-weight:700;font-size:18px;color:var(--ink);
+  }
+  .side .brand b{font-size:14px;line-height:1.25;}
+  .side .brand small{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;font-weight:400;}
+  .nav-label{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.5;padding:16px 10px 8px;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;
+    color:var(--white);text-decoration:none;font-size:14px;font-weight:600;
+  }
+  .nav-item:hover{background:rgba(255,255,255,.08);}
+  .nav-item.active{background:var(--pink);color:var(--ink);}
+  .nav-item svg{width:17px;height:17px;fill:currentColor;flex:none;}
+  .nav-item .count{
+    margin-left:auto;font-size:11px;font-weight:700;background:rgba(255,255,255,.14);
+    border-radius:999px;padding:1px 9px;
+  }
+  .nav-item.active .count{background:rgba(29,29,27,.14);}
+  .side-foot{margin-top:auto;padding:16px 10px 0;font-size:11px;opacity:.55;line-height:1.6;}
+
+  /* ---- Main ---- */
+  .main{padding:28px 32px 40px;max-width:1400px;}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  .page-head h1{font-size:27px;letter-spacing:-.01em;}
+  .page-head p{font-size:13px;opacity:.65;}
+  .range{
+    display:flex;border:1px solid var(--border);border-radius:999px;background:var(--white);overflow:hidden;
+  }
+  .range span{padding:8px 18px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .range span.on{background:var(--ink);color:var(--white);}
+
+  .card{
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;
+  }
+  .card h2{font-size:16.5px;margin-bottom:2px;}
+  .card .sub{font-size:12px;opacity:.6;margin-bottom:16px;}
+
+  /* KPI row */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .kpi{padding:18px 20px;}
+  .kpi small{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.55;margin-bottom:6px;}
+  .kpi b{font-family:'Source Serif Pro',Georgia,serif;font-size:30px;font-weight:700;line-height:1.1;}
+  .kpi .delta{
+    display:inline-block;margin-left:8px;font-size:11px;font-weight:700;
+    background:var(--pink);border-radius:999px;padding:2px 9px;vertical-align:4px;
+  }
+  .kpi .delta.flat{background:rgba(29,29,27,.08);}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start;}
+  .col{display:flex;flex-direction:column;gap:16px;min-width:0;}
+
+  /* Chart */
+  .legend{display:flex;gap:18px;font-size:12px;font-weight:600;margin-bottom:10px;}
+  .legend i{display:inline-block;width:22px;height:5px;border-radius:3px;vertical-align:2px;margin-right:7px;}
+  .legend .l-pink i{background:var(--pink);}
+  .legend .l-lav i{background:var(--lavender);}
+  .chart-box{overflow-x:auto;}
+  .chart-box svg{width:100%;height:auto;display:block;}
+
+  /* Rep table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{
+    text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    opacity:.55;font-weight:700;padding:0 12px 10px;border-bottom:1px solid var(--border);
+  }
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .rep{display:flex;align-items:center;gap:11px;font-weight:700;white-space:nowrap;}
+  .rep i{
+    width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-style:normal;
+    font-size:11px;font-weight:700;flex:none;
+  }
+  .cell-bar{display:flex;align-items:center;gap:9px;min-width:96px;}
+  .cell-bar .t{flex:1;height:7px;border-radius:99px;background:rgba(29,29,27,.08);overflow:hidden;}
+  .cell-bar .f{height:100%;border-radius:99px;background:var(--pink);}
+  .cell-bar b{font-size:12.5px;font-variant-numeric:tabular-nums;width:24px;text-align:right;}
+  .avg-pill{
+    display:inline-block;background:var(--ink);color:var(--white);border-radius:999px;
+    padding:3px 12px;font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums;
+  }
+  .avg-pill.low{background:rgba(29,29,27,.10);color:var(--ink);}
+
+  /* Recent sessions */
+  .sess{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .sess:last-child{border-bottom:none;}
+  .sess i{
+    width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:700;flex:none;
+  }
+  .sess .who{min-width:0;flex:1;}
+  .sess .who b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sess .who small{display:block;font-size:11.5px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sess .score{
+    font-family:'Source Serif Pro',Georgia,serif;font-weight:700;font-size:17px;flex:none;
+  }
+  .sess time{font-size:11px;opacity:.5;flex:none;width:52px;text-align:right;}
+
+  /* Frameworks */
+  .fw{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .fw:last-of-type{border-bottom:none;margin-bottom:14px;}
+  .fw .sq{
+    width:34px;height:34px;border-radius:9px;background:var(--pink);flex:none;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif Pro',Georgia,serif;font-weight:700;font-size:15px;
+  }
+  .fw .sq.lav{background:rgba(138,95,190,.20);}
+  .fw div{flex:1;min-width:0;}
+  .fw b{display:block;font-size:13.5px;}
+  .fw small{display:block;font-size:11.5px;opacity:.6;}
+  .fw .st{
+    font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 10px;
+    background:rgba(29,29,27,.07);flex:none;
+  }
+  .fw .st.live{background:var(--pink);}
+
+  /* Billing */
+  .bill-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px;}
+  .bill-row:last-of-type{border-bottom:none;}
+  .bill-row b{font-variant-numeric:tabular-nums;}
+  .bill-plan{
+    background:var(--bg);border:1px solid var(--border);border-radius:11px;
+    padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;
+  }
+  .bill-plan b{font-size:15px;display:block;}
+  .bill-plan small{font-size:11.5px;opacity:.6;}
+  .bill-plan .st{background:var(--pink);border-radius:999px;font-size:10.5px;font-weight:700;padding:4px 12px;}
+  .usage{margin:14px 0 4px;}
+  .usage label{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px;}
+  .usage .t{height:9px;border-radius:99px;background:rgba(29,29,27,.08);overflow:hidden;}
+  .usage .f{height:100%;border-radius:99px;background:var(--pink);width:62%;}
+  .bill-foot{font-size:11.5px;opacity:.55;margin-top:12px;}
+
+  footer.page-foot{
+    grid-column:1 / -1;background:var(--ink);color:var(--white);
+    text-align:center;font-size:12px;padding:20px 24px;line-height:1.7;
+  }
+  footer.page-foot a{color:var(--white);}
+
+  @media (max-width:1024px){
+    .shell{grid-template-columns:200px minmax(0,1fr);}
+    .main{padding:24px 20px 36px;}
+    .kpis{gap:12px;}
+    .kpi b{font-size:26px;}
+    .grid{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);}
+    td,th{padding-left:8px;padding-right:8px;}
+  }
+  @media print{
+    body{background:var(--white);}
+    .shell{grid-template-columns:180px minmax(0,1fr);}
+    .card{box-shadow:none;break-inside:avoid;}
+    .btn-grad{box-shadow:none;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <b>MMG Coach Studio<small>Manager console</small></b>
+    </div>
+
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+      Practice
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v3H4V5zm0 5.5h16v3H4v-3zM4 16h16v3H4v-3z"/></svg>
+      Rubrics
+      <span class="count">6</span>
+    </a>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3 1.3 3 3 3zm-8 0c1.7 0 3-1.3 3-3S9.7 5 8 5 5 6.3 5 8s1.3 3 3 3zm0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13zm8 0c-.3 0-.6 0-1 .1 1.2.8 2 1.9 2 3.4V19h6v-2.5c0-2.3-4.7-3.5-7-3.5z"/></svg>
+      Team
+    </a>
+
+    <div class="nav-label">Groups</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+      Enterprise AEs
+      <span class="count">9</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+      SMB Pod
+      <span class="count">7</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+      Onboarding '26
+      <span class="count">5</span>
+    </a>
+
+    <div class="side-foot">Signed in as<br><b style="opacity:.9">D. Reyes — Sales Enablement</b></div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <div class="page-head">
+      <div>
+        <h1>Team performance</h1>
+        <p>Enterprise AEs · 9 reps · Challenger rubric v3</p>
+      </div>
+      <div class="range">
+        <span>30 days</span><span class="on">This quarter</span><span>YTD</span>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpis">
+      <div class="card kpi"><small>Sessions this quarter</small><b>312<span class="delta">+18%</span></b></div>
+      <div class="card kpi"><small>Team average score</small><b>3.8<span class="delta">+0.4</span></b></div>
+      <div class="card kpi"><small>Reps practicing weekly</small><b>7 / 9<span class="delta flat">–</span></b></div>
+      <div class="card kpi"><small>Scenarios completed</small><b>86%<span class="delta">+9 pts</span></b></div>
+    </div>
+
+    <div class="grid">
+
+      <!-- ===== Left column ===== -->
+      <div class="col">
+
+        <!-- Score trend -->
+        <div class="card">
+          <h2>Score trend</h2>
+          <p class="sub">Weighted session average, last 8 weeks</p>
+          <div class="legend">
+            <span class="l-pink"><i></i>Team average</span>
+            <span class="l-lav"><i></i>Top quartile</span>
+          </div>
+          <div class="chart-box">
+            <svg viewBox="0 0 640 240" role="img" aria-label="Line chart of team score trend over eight weeks">
+              <!-- gridlines -->
+              <g stroke="rgba(29,29,27,.10)" stroke-width="1">
+                <line x1="46" y1="20"  x2="620" y2="20"/>
+                <line x1="46" y1="65"  x2="620" y2="65"/>
+                <line x1="46" y1="110" x2="620" y2="110"/>
+                <line x1="46" y1="155" x2="620" y2="155"/>
+                <line x1="46" y1="200" x2="620" y2="200"/>
+              </g>
+              <!-- y labels -->
+              <g font-family="Open Sans, Arial, sans-serif" font-size="11" fill="#1D1D1B" opacity=".55" text-anchor="end">
+                <text x="38" y="24">5.0</text>
+                <text x="38" y="69">4.5</text>
+                <text x="38" y="114">4.0</text>
+                <text x="38" y="159">3.5</text>
+                <text x="38" y="204">3.0</text>
+              </g>
+              <!-- x labels -->
+              <g font-family="Open Sans, Arial, sans-serif" font-size="11" fill="#1D1D1B" opacity=".55" text-anchor="middle">
+                <text x="66"  y="226">W1</text>
+                <text x="145" y="226">W2</text>
+                <text x="224" y="226">W3</text>
+                <text x="303" y="226">W4</text>
+                <text x="382" y="226">W5</text>
+                <text x="461" y="226">W6</text>
+                <text x="540" y="226">W7</text>
+                <text x="619" y="226">W8</text>
+              </g>
+              <!-- top quartile (lavender, support) -->
+              <polyline fill="none" stroke="#8A5FBE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 7"
+                points="66,92 145,88 224,80 303,74 382,70 461,60 540,56 619,48"/>
+              <!-- team average (pink, primary) -->
+              <polyline fill="none" stroke="#FF97A9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+                points="66,164 145,168 224,150 303,138 382,142 461,120 540,114 619,101"/>
+              <g fill="#FF97A9" stroke="#FFFFFF" stroke-width="2">
+                <circle cx="66"  cy="164" r="5"/><circle cx="145" cy="168" r="5"/>
+                <circle cx="224" cy="150" r="5"/><circle cx="303" cy="138" r="5"/>
+                <circle cx="382" cy="142" r="5"/><circle cx="461" cy="120" r="5"/>
+                <circle cx="540" cy="114" r="5"/><circle cx="619" cy="101" r="5"/>
+              </g>
+              <!-- latest point callout -->
+              <g>
+                <rect x="566" y="66" rx="8" width="58" height="24" fill="#1D1D1B"/>
+                <text x="595" y="82" font-family="Open Sans, Arial, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">3.9</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Rep table -->
+        <div class="card">
+          <h2>Reps — rubric averages</h2>
+          <p class="sub">This quarter · Challenger rubric v3 · scores out of 5</p>
+          <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Rep</th><th class="num">Sessions</th>
+                <th>Discovery</th><th>Objections</th><th>Value</th><th>Close</th>
+                <th class="num">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rep"><i>AK</i>Alicia Kim</span></td>
+                <td class="num">48</td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:92%"></span></span><b>4.6</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:84%"></span></span><b>4.2</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:88%"></span></span><b>4.4</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:80%"></span></span><b>4.0</b></span></td>
+                <td class="num"><span class="avg-pill">4.3</span></td>
+              </tr>
+              <tr>
+                <td><span class="rep"><i>MO</i>Marcus Oyelaran</span></td>
+                <td class="num">41</td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:82%"></span></span><b>4.1</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:86%"></span></span><b>4.3</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:76%"></span></span><b>3.8</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:72%"></span></span><b>3.6</b></span></td>
+                <td class="num"><span class="avg-pill">4.0</span></td>
+              </tr>
+              <tr>
+                <td><span class="rep"><i>PS</i>Priya Shah</span></td>
+                <td class="num">39</td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:78%"></span></span><b>3.9</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:70%"></span></span><b>3.5</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:84%"></span></span><b>4.2</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:66%"></span></span><b>3.3</b></span></td>
+                <td class="num"><span class="avg-pill">3.8</span></td>
+              </tr>
+              <tr>
+                <td><span class="rep"><i>DW</i>Devon Walsh</span></td>
+                <td class="num">35</td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:72%"></span></span><b>3.6</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:74%"></span></span><b>3.7</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:68%"></span></span><b>3.4</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:70%"></span></span><b>3.5</b></span></td>
+                <td class="num"><span class="avg-pill low">3.6</span></td>
+              </tr>
+              <tr>
+                <td><span class="rep"><i>TN</i>Tomás Núñez</span></td>
+                <td class="num">22</td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:64%"></span></span><b>3.2</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:58%"></span></span><b>2.9</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:66%"></span></span><b>3.3</b></span></td>
+                <td><span class="cell-bar"><span class="t"><span class="f" style="width:52%"></span></span><b>2.6</b></span></td>
+                <td class="num"><span class="avg-pill low">3.0</span></td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== Right column ===== -->
+      <div class="col">
+
+        <!-- Recent sessions -->
+        <div class="card">
+          <h2>Recent sessions</h2>
+          <p class="sub">Across all groups</p>
+          <div class="sess">
+            <i>AK</i>
+            <span class="who"><b>Alicia Kim</b><small>Objection gauntlet · Sandler</small></span>
+            <span class="score">4.5</span><time>12m ago</time>
+          </div>
+          <div class="sess">
+            <i>TN</i>
+            <span class="who"><b>Tomás Núñez</b><small>Cold discovery · Challenger</small></span>
+            <span class="score">3.1</span><time>1h ago</time>
+          </div>
+          <div class="sess">
+            <i>PS</i>
+            <span class="who"><b>Priya Shah</b><small>Renewal save · SPIN</small></span>
+            <span class="score">4.0</span><time>3h ago</time>
+          </div>
+          <div class="sess">
+            <i>MO</i>
+            <span class="who"><b>Marcus Oyelaran</b><small>Demo follow-up · MEDDIC</small></span>
+            <span class="score">4.2</span><time>Yesterday</time>
+          </div>
+          <div class="sess">
+            <i>DW</i>
+            <span class="who"><b>Devon Walsh</b><small>Cold discovery · Challenger</small></span>
+            <span class="score">3.4</span><time>Yesterday</time>
+          </div>
+        </div>
+
+        <!-- Frameworks -->
+        <div class="card">
+          <h2>Frameworks &amp; rubrics</h2>
+          <p class="sub">Scoring rubrics available to your team</p>
+          <div class="fw">
+            <span class="sq">C</span>
+            <div><b>Challenger v3</b><small>4 criteria · weighted · 312 sessions</small></div>
+            <span class="st live">Live</span>
+          </div>
+          <div class="fw">
+            <span class="sq">S</span>
+            <div><b>SPIN Selling</b><small>4 criteria · weighted · 148 sessions</small></div>
+            <span class="st live">Live</span>
+          </div>
+          <div class="fw">
+            <span class="sq">M</span>
+            <div><b>MEDDIC</b><small>6 criteria · weighted · 96 sessions</small></div>
+            <span class="st live">Live</span>
+          </div>
+          <div class="fw">
+            <span class="sq lav">Sa</span>
+            <div><b>Sandler</b><small>5 criteria · draft weights</small></div>
+            <span class="st">Draft</span>
+          </div>
+          <a class="btn btn-grad btn-block" href="#">+ Build rubric</a>
+        </div>
+
+        <!-- Billing -->
+        <div class="card">
+          <h2>Billing summary</h2>
+          <p class="sub">Workspace: Corvid Sales Org</p>
+          <div class="bill-plan">
+            <div><b>Team Studio — Pilot</b><small>Renews Oct 1, 2026</small></div>
+            <span class="st">Active</span>
+          </div>
+          <div class="bill-row"><span>Seats in use</span><b>21 of 25</b></div>
+          <div class="bill-row"><span>Sessions included / mo</span><b>1,000</b></div>
+          <div class="usage">
+            <label><span>Sessions used this month</span><span>624 / 1,000</span></label>
+            <div class="t"><div class="f"></div></div>
+          </div>
+          <div class="bill-row"><span>Next invoice</span><b>Pricing TBD</b></div>
+          <p class="bill-foot">Pilot pricing is being finalized with the MMG team. Questions? support@themotivatedmindgroup.com</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="page-foot">
+    &copy; 2026 The Motivated Mind Group Inc. | 480-219-2875 | <a href="mailto:support@themotivatedmindgroup.com">support@themotivatedmindgroup.com</a> | 260 S Arizona Ave, Chandler AZ 85225
+  </footer>
+
+</div>
+</body>
+</html>
