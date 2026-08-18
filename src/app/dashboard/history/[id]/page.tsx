@@ -13,12 +13,25 @@ interface Message {
 
 interface Score {
   id: string;
-  criterion_id: string;
+  criterion_id: string | null;
   score: number;
   ai_feedback: string | null;
+  preset_criterion_name: string | null;
+  weight_percent: number | null;
   // Supabase returns joined one-to-one as array when using select()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   criteria: any;
+}
+
+function scoreName(sc: Score): string {
+  if (sc.preset_criterion_name) return sc.preset_criterion_name;
+  return (Array.isArray(sc.criteria) ? sc.criteria[0]?.name : sc.criteria?.name) ?? "Criterion";
+}
+
+function scoreWeight(sc: Score): number | null {
+  if (sc.weight_percent != null) return Number(sc.weight_percent);
+  const w = Array.isArray(sc.criteria) ? sc.criteria[0]?.weight_percent : sc.criteria?.weight_percent;
+  return w != null ? Number(w) : null;
 }
 
 interface SessionDetail {
@@ -56,12 +69,15 @@ function formatDateTime(iso: string) {
   });
 }
 
+// Score band -> chip classes. Text stays black/neutral (text-ink / text-ink-3)
+// per the brand rule (text/icons black or white only); the semantic
+// good/ok/bad distinction is carried by the background color instead.
 function scoreColor(score: number | null): string {
   if (!score) return "text-ink-3";
-  if (score >= 80) return "text-green";
-  if (score >= 65) return "text-accent";
-  if (score >= 50) return "text-gold";
-  return "text-red";
+  if (score >= 80) return "text-ink bg-green/15";
+  if (score >= 65) return "text-ink";
+  if (score >= 50) return "text-ink bg-gold/15";
+  return "text-ink bg-red/15";
 }
 
 export default function SessionDetailPage() {
@@ -93,7 +109,7 @@ export default function SessionDetailPage() {
           .order("created_at", { ascending: true }),
         supabase
           .from("session_scores")
-          .select("id, criterion_id, score, ai_feedback, criteria(name, weight_percent)")
+          .select("id, criterion_id, score, ai_feedback, preset_criterion_name, weight_percent, criteria(name, weight_percent)")
           .eq("session_id", sessionId),
       ]);
 
@@ -118,7 +134,7 @@ export default function SessionDetailPage() {
     return (
       <div className="p-8 text-center">
         <div className="text-ink-3 text-sm mb-4">Session not found.</div>
-        <button onClick={() => router.push("/dashboard/history")} className="text-accent text-sm underline">
+        <button onClick={() => router.push("/dashboard/history")} className="text-ink text-sm underline">
           ← Back to history
         </button>
       </div>
@@ -148,7 +164,7 @@ export default function SessionDetailPage() {
             <div className="text-sm text-ink-3 mt-0.5">{session.client_contact}</div>
           )}
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="inline-flex px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-semibold rounded-full">
+            <span className="inline-flex px-2 py-0.5 bg-accent/20 text-ink text-[10px] font-semibold rounded-full">
               DISC: {session.disc_profile}
               {session.disc_blend && session.disc_blend !== "single" ? ` (${session.disc_blend})` : ""}
             </span>
@@ -168,7 +184,7 @@ export default function SessionDetailPage() {
 
         {/* Score badge */}
         <div className={`text-center ml-6 shrink-0`}>
-          <div className={`text-5xl font-bold ${scoreColor(session.overall_score)}`}>
+          <div className={`text-5xl font-bold rounded-[16px] px-4 py-1 ${scoreColor(session.overall_score)}`}>
             {session.overall_score ?? "—"}
           </div>
           <div className="text-[11px] text-ink-3 mt-0.5">Overall Score</div>
@@ -191,7 +207,7 @@ export default function SessionDetailPage() {
             onClick={() => setActiveTab(tab as typeof activeTab)}
             className={`px-4 py-2 text-xs font-semibold capitalize transition-colors border-b-2 -mb-px ${
               activeTab === tab
-                ? "border-accent text-accent"
+                ? "border-accent text-ink"
                 : "border-transparent text-ink-3 hover:text-ink"
             }`}
           >
@@ -213,7 +229,7 @@ export default function SessionDetailPage() {
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                    msg.role === "assistant" ? "bg-ink text-white" : "bg-accent text-white"
+                    msg.role === "assistant" ? "bg-ink text-white" : "bg-accent text-ink"
                   }`}
                 >
                   {msg.role === "assistant" ? "AI" : "You"}
@@ -222,7 +238,7 @@ export default function SessionDetailPage() {
                   className={`max-w-[72%] px-4 py-3 rounded-[12px] text-[13px] leading-relaxed ${
                     msg.role === "assistant"
                       ? "bg-white border border-border text-ink"
-                      : "bg-accent text-white"
+                      : "bg-accent text-ink"
                   }`}
                 >
                   {msg.content}
@@ -238,19 +254,23 @@ export default function SessionDetailPage() {
         <div className="bg-card border border-border rounded-[12px] p-5 shadow-card">
           {scores.length === 0 ? (
             <div className="text-sm text-ink-3 italic">
-              Criterion-level scores are saved for custom frameworks. Preset framework scores (Human Edge, Challenger, etc.) are shown as the overall score above.
+              No criterion-level scores were recorded for this session.
             </div>
           ) : (
             <div className="flex flex-col gap-4">
               {scores.map((sc) => {
                 const pct = ((sc.score - 1) / 4) * 100;
+                const weight = scoreWeight(sc);
                 return (
                   <div key={sc.id}>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium text-ink">
-                        {(Array.isArray(sc.criteria) ? sc.criteria[0]?.name : sc.criteria?.name) ?? "Criterion"}
+                        {scoreName(sc)}
+                        {weight != null && (
+                          <span className="text-[11px] text-ink-3 font-normal ml-1.5">({weight}%)</span>
+                        )}
                       </span>
-                      <span className={`text-sm font-bold ${scoreColor(sc.score * 20)}`}>
+                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${scoreColor(sc.score * 20)}`}>
                         {sc.score} / 5
                       </span>
                     </div>

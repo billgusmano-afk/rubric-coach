@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMG AI Coach &amp; Role-Play Studio · The Motivated Mind Group</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@600&family=Open+Sans:wght@400;600;700&display=swap');
+  :root{
+    --ink:#1D1D1B;            /* MMG near-black */
+    --pink:#FF97A9;           /* MMG master pink */
+    --pink-soft:#FDF5F6;      /* light background */
+    --pink-mid:#FFE3E9;       /* soft panel tint */
+    --lav:#8A5FBE;            /* lavender — support only */
+    --grad:linear-gradient(45deg,#FF8BAE 20%,#FF8F8B 80%);  /* master gradient */
+    --bg:#FDF5F6;--panel:#F6E9EC;--gray-600:#5c5c5c;--gray-300:#E5D9DC;--white:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Open Sans',system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;}
+  h1,h2,#gate h2{font-family:'Source Serif Pro',Georgia,serif;font-weight:600;}
+  .hero{background:var(--ink);color:#fff;padding:18px 24px;border-bottom:4px solid transparent;border-image:var(--grad) 1;}
+  .hero .in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .hero .kick{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);font-weight:700;}
+  .hero h1{font-size:21px;margin-top:2px;color:#fff;}
+  .addon{background:var(--grad);color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:5px 11px;border-radius:20px;white-space:nowrap;}
+  .wrap{max-width:1080px;margin:0 auto;padding:16px 24px 40px;}
+  /* gate */
+  #gate{background:#fff;border-radius:16px;padding:26px;box-shadow:0 2px 10px rgba(29,29,27,.07);max-width:440px;margin:30px auto;text-align:center;}
+  #gate h2{font-size:19px;margin-bottom:6px;}
+  #gate p{font-size:13.5px;color:var(--gray-600);margin-bottom:16px;}
+  #gate input{width:100%;padding:11px 13px;border:1.5px solid var(--gray-300);border-radius:10px;font:inherit;font-size:15px;text-align:center;letter-spacing:.1em;}
+  #gate input:focus{outline:none;border-color:var(--pink);}
+  #gate button{width:100%;margin-top:12px;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:11px;font:inherit;font-weight:700;cursor:pointer;}
+  #gateErr{color:#b3402e;font-size:12.5px;margin-top:10px;min-height:16px;}
+  /* setup bar */
+  #app{display:none;}
+  .setup{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 2px 10px rgba(29,29,27,.05);margin:12px 0 14px;}
+  .seg{display:flex;background:var(--panel);border-radius:10px;padding:3px;}
+  .seg button{border:none;background:transparent;padding:8px 14px;border-radius:8px;font:inherit;font-size:13px;font-weight:700;color:var(--gray-600);cursor:pointer;}
+  .seg button.on{background:var(--ink);color:#fff;}
+  .setup label{font-size:12px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.05em;}
+  .setup select{padding:8px 11px;border:1.5px solid var(--gray-300);border-radius:9px;font:inherit;font-size:13px;background:#fff;}
+  .voice-t{display:flex;align-items:center;gap:7px;margin-left:auto;font-size:13px;font-weight:600;cursor:pointer;user-select:none;}
+  .voice-t input{accent-color:var(--pink);width:16px;height:16px;}
+  /* layout */
+  .studio{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start;}
+  @media(max-width:860px){.studio{grid-template-columns:1fr;}}
+  #chat{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);overflow:hidden;}
+  #log{padding:18px;min-height:340px;max-height:56vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+  .row{display:flex;gap:10px;align-items:flex-end;}
+  .row.user{justify-content:flex-end;}
+  .msg{max-width:78%;padding:11px 14px;border-radius:14px;font-size:14px;white-space:pre-wrap;}
+  .msg.user{background:var(--ink);color:#fff;border-bottom-right-radius:4px;}
+  .msg.bot{background:var(--pink-mid);color:var(--ink);border-bottom-left-radius:4px;}
+  .msg.sys{align-self:center;background:#fff;border:1.5px dashed var(--gray-300);color:var(--gray-600);font-size:12.5px;text-align:center;max-width:92%;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 38px;position:relative;}
+  .avatar.speaking::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2.5px solid var(--pink);animation:pulse 1.1s ease-out infinite;}
+  @keyframes pulse{0%{transform:scale(.85);opacity:1}100%{transform:scale(1.25);opacity:0}}
+  .typing{align-self:flex-start;color:var(--gray-600);font-size:13px;font-style:italic;padding-left:48px;}
+  .starters{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 14px;}
+  .starters button{background:#fff;border:1.5px solid var(--gray-300);border-radius:20px;padding:7px 12px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;}
+  .starters button:hover{border-color:var(--pink);}
+  .composer{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--gray-300);background:var(--panel);}
+  .composer input{flex:1;padding:11px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font:inherit;font-size:14px;background:#fff;}
+  .composer input:focus{outline:none;border-color:var(--pink);}
+  .sendbtn{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;}
+  .sendbtn:disabled{opacity:.5;cursor:default;}
+  /* speaking avatar (side panel) */
+  #persona{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);padding:16px;text-align:center;margin-bottom:14px;}
+  #faceWrap{width:150px;height:150px;margin:0 auto;border-radius:50%;padding:5px;background:var(--grad);position:relative;}
+  #faceWrap.speaking{animation:glow 1.2s ease-in-out infinite;}
+  @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,151,169,.55)}50%{box-shadow:0 0 0 12px rgba(255,151,169,0)}}
+  #faceWrap svg{display:block;width:100%;height:100%;border-radius:50%;background:#fff;}
+  #personaName{font-family:'Source Serif Pro',Georgia,serif;font-weight:600;font-size:16px;margin-top:10px;}
+  #personaRole{font-size:12px;color:var(--gray-600);}
+  /* rubric panel */
+  #rubric{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);padding:16px 18px;}
+  #rubric h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-600);margin-bottom:12px;}
+  .dim{margin-bottom:12px;}
+  .dim .lab{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:4px;}
+  .dim .lab .sc{color:var(--gray-600);}
+  .bar{height:8px;background:var(--panel);border-radius:6px;overflow:hidden;}
+  .bar i{display:block;height:100%;background:var(--grad);border-radius:6px;width:0;transition:width .6s ease;}
+  .bar i.low{background:#c46a3f;} .bar i.mid{background:var(--lav);}
+  .bar.avg{height:4px;margin-top:3px;} .bar.avg i{background:var(--lav);opacity:.7;}
+  /* scorecard */
+  #scorecard{display:none;background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);padding:26px 30px;margin-top:16px;}
+  #scorecard h2{font-size:21px;margin-bottom:2px;}
+  #scorecard .sub{font-size:12.5px;color:var(--gray-600);margin-bottom:16px;}
+  .sc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 18px;}
+  @media(max-width:700px){.sc-grid{grid-template-columns:repeat(2,1fr);}}
+  .sc-cell{background:var(--pink-mid);border-radius:12px;padding:12px 14px;text-align:center;}
+  .sc-cell .num{font-size:26px;font-weight:800;color:var(--ink);}
+  .sc-cell .lbl{font-size:11.5px;font-weight:700;color:var(--ink);}
+  .sc-cell .tr{font-size:11px;color:var(--gray-600);}
+  #sc-narrative{font-size:13.5px;color:var(--ink);white-space:pre-wrap;background:var(--bg);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
+  .sc-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .sc-actions a,.sc-actions button{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;font-size:14px;}
+  .sc-actions .alt{background:var(--grad);color:var(--ink);}
+  @media print{
+    .hero,.setup,.studio,.foot,.sc-actions,.meta,#instr,#instrShow{display:none !important;}
+    body{background:#fff;} #scorecard{display:block !important;box-shadow:none;padding:0;}
+  }
+  #coachnote{background:var(--pink-mid);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink);margin-top:10px;min-height:44px;}
+  #coachnote b{color:var(--ink);}
+  .rubhint{font-size:11.5px;color:var(--gray-600);margin-top:10px;}
+  .meta{font-size:11.5px;color:var(--gray-600);text-align:center;margin-top:12px;}
+  .foot{font-size:11.5px;color:var(--gray-600);text-align:center;margin-top:24px;line-height:1.7;}
+  .foot a{color:var(--ink);font-weight:700;}
+  .cta{display:inline-block;background:var(--ink);color:#fff !important;border-radius:20px;padding:8px 16px;text-decoration:none;font-weight:700;font-size:12.5px;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="hero"><div class="in">
+  <div>
+    <div class="kick">The Motivated Mind Group</div>
+    <h1>MMG AI Coach &amp; Role-Play Studio <span style="font-family:'Open Sans';font-weight:400;font-size:14px;opacity:.7">— live demo</span></h1>
+  </div>
+  <span class="addon">Reskinnable for your team</span>
+</div></div>
+
+<div class="wrap">
+  <div id="gate">
+    <h2>Preview the AI Coach &amp; Role-Play Studio</h2>
+    <p>Practice real sales conversations with an AI customer that talks back — live rubric scoring, selectable sales method, a speaking avatar, and a manager-ready scorecard. Enter the preview access code.</p>
+    <input id="code" placeholder="access code" autocomplete="off" />
+    <button id="enter">Enter the studio</button>
+    <div id="gateErr"></div>
+  </div>
+
+  <div id="app">
+    <div class="setup">
+      <div class="seg" id="modeSeg">
+        <button data-mode="coach" class="on">Ask the Coach</button>
+        <button data-mode="roleplay">Role-Play a Customer</button>
+      </div>
+      <label for="scenario">Scenario</label>
+      <select id="scenario"></select>
+      <label for="method">Sales method</label>
+      <select id="method">
+        <option value="consultative">Consultative</option>
+        <option value="challenger">Challenger</option>
+        <option value="spin">SPIN</option>
+        <option value="sandler">Sandler</option>
+        <option value="meddic">MEDDIC</option>
+      </select>
+      <label class="voice-t"><input type="checkbox" id="voice" checked> Voice replies</label>
+    </div>
+
+    <div id="instr" style="background:#fff;border-left:5px solid var(--pink);border-radius:12px;box-shadow:0 2px 10px rgba(29,29,27,.05);padding:12px 16px;margin-bottom:12px;position:relative;">
+      <button id="instrMin" title="Minimize" style="position:absolute;top:8px;right:10px;background:var(--panel);border:none;border-radius:6px;width:24px;height:24px;font-weight:800;cursor:pointer;color:var(--gray-600);">–</button>
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);margin-bottom:4px;">How this works</div>
+      <div id="instrBody" style="font-size:13px;color:var(--ink);"></div>
+    </div>
+    <button id="instrShow" style="display:none;background:var(--ink);color:#fff;border:none;border-radius:20px;padding:7px 14px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:12px;">? How this works</button>
+
+    <div class="studio">
+      <div>
+        <div id="chat">
+          <div id="log"></div>
+          <div class="starters" id="starters"></div>
+          <div class="composer">
+            <button class="sendbtn" id="mic" title="Say it — speak instead of typing" style="background:var(--lav);padding:11px 13px;">🎤</button>
+            <button class="sendbtn" id="upload" title="Upload your plan (.txt / .md)" style="background:var(--lav);padding:11px 13px;">📎</button>
+            <input type="file" id="planfile" accept=".txt,.md,text/plain" style="display:none;">
+            <input id="q" placeholder="Type your message, tap 🎤 to say it, or 📎 to upload your plan…" autocomplete="off" />
+            <button class="sendbtn" id="pause" title="Pause / resume voice" style="background:var(--gray-600);padding:11px 13px;display:none;">⏸</button>
+            <button class="sendbtn" id="send">Send</button>
+          </div>
+        </div>
+        <div class="meta" id="meta"></div>
+      </div>
+
+      <div>
+        <!-- Speaking avatar: SVG face lip-synced to the ElevenLabs audio -->
+        <div id="persona">
+          <div id="faceWrap">
+            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-label="speaking avatar">
+              <defs>
+                <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="20%" stop-color="#FF8BAE"/><stop offset="80%" stop-color="#FF8F8B"/>
+                </linearGradient>
+              </defs>
+              <!-- MMG illustration style: thin black outlines, pink gradient fills -->
+              <circle cx="60" cy="60" r="58" fill="#fff"/>
+              <path d="M20 118 Q22 88 60 88 Q98 88 100 118 Z" fill="url(#mg)" stroke="#1D1D1B" stroke-width="2"/>
+              <circle cx="60" cy="52" r="30" fill="#fff" stroke="#1D1D1B" stroke-width="2"/>
+              <path id="hair" d="M30 48 Q30 20 60 20 Q90 20 90 48 Q78 40 60 40 Q42 40 30 48 Z" fill="url(#mg)" stroke="#1D1D1B" stroke-width="2"/>
+              <g id="eyes">
+                <ellipse id="eyeL" cx="49" cy="50" rx="3.2" ry="4" fill="#1D1D1B"/>
+                <ellipse id="eyeR" cx="71" cy="50" rx="3.2" ry="4" fill="#1D1D1B"/>
+              </g>
+              <ellipse id="mouth" cx="60" cy="68" rx="8" ry="1.6" fill="#1D1D1B"/>
+            </svg>
+          </div>
+          <video id="hgVideo" autoplay playsinline style="display:none;width:150px;height:150px;margin:0 auto;border-radius:50%;object-fit:cover;border:5px solid transparent;background:var(--grad) border-box;"></video>
+          <div id="personaName">MMG Coach</div>
+          <div id="personaRole">Powered by The Motivated Mind Group</div>
+          <div class="seg" style="margin:10px auto 0;display:inline-flex;" id="avSeg">
+            <button data-av="svg" class="on" style="font-size:11.5px;padding:6px 10px;">Illustrated</button>
+            <button data-av="heygen" style="font-size:11.5px;padding:6px 10px;">Live avatar</button>
+          </div>
+          <div id="avNote" style="font-size:11px;color:var(--gray-600);margin-top:6px;min-height:14px;"></div>
+        </div>
+
+        <div id="rubric" style="display:none;">
+          <h3>Live rubric — last message · <span style="color:var(--lav)">session avg</span></h3>
+          <div class="dim" data-d="discovery"><div class="lab"><span>Discovery &amp; listening</span><span class="sc">–</span></div><div class="bar"><i></i></div><div class="bar avg"><i></i></div></div>
+          <div class="dim" data-d="acumen"><div class="lab"><span>Business acumen</span><span class="sc">–</span></div><div class="bar"><i></i></div><div class="bar avg"><i></i></div></div>
+          <div class="dim" data-d="value"><div class="lab"><span>Quantified value</span><span class="sc">–</span></div><div class="bar"><i></i></div><div class="bar avg"><i></i></div></div>
+          <div class="dim" data-d="method"><div class="lab"><span>Method fidelity</span><span class="sc">–</span></div><div class="bar"><i></i></div><div class="bar avg"><i></i></div></div>
+          <div id="coachnote"><b>Coach:</b> scores and a coaching tip appear here after each message.</div>
+          <button id="finish" style="display:none;width:100%;margin-top:12px;background:var(--grad);color:var(--ink);border:none;border-radius:10px;padding:11px;font:inherit;font-weight:800;cursor:pointer;">Finish &amp; get my scorecard</button>
+          <div class="rubhint">Scored 1–5 against the rubric, updated in real time. Finish the session for a printable, manager-ready scorecard.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="scorecard">
+      <h2>Session Scorecard — Sales Role-Play</h2>
+      <div class="sub" id="sc-sub"></div>
+      <div class="sc-grid" id="sc-grid"></div>
+      <div id="sc-narrative">Generating the coach's assessment…</div>
+      <div class="sc-actions">
+        <button onclick="window.print()">🖨 Print / save as PDF</button>
+        <a class="alt" id="sc-mail" href="#">✉ Email to my manager</a>
+        <button style="background:var(--gray-600)" onclick="document.getElementById('scorecard').style.display='none'">Close</button>
+      </div>
+    </div>
+
+    <div class="foot">
+      Want this studio branded for your team — your scenarios, your rubric, your products?<br>
+      <a class="cta" href="https://calendar.app.google/MobjLNPwhcHusEHUA" target="_blank" rel="noopener">📅 Book 15 minutes with Bill Gusmano</a><br><br>
+      © 2026 The Motivated Mind Group Inc. | 480-219-2875 | support@themotivatedmindgroup.com | 260 S Arizona Ave, Chandler AZ 85225
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Embed mode & LMS bridge ─────────────────────────────────────────────
+// ?embed=1            strip chrome (hero/footer/instructions), boot straight in
+// &code=XXXX          auto-pass the access gate
+// &mode=roleplay      start mode (coach | roleplay)
+// &scenario=generic   start scenario key
+// &method=spin        start sales method
+// Scores/completion are posted to the parent frame (Storyline Web Object or
+// the SCORM wrapper) via postMessage: {source:'mmg-coach-studio', event, ...}
+const PARAMS = new URLSearchParams(location.search);
+const EMBED = PARAMS.get("embed") === "1";
+function postToHost(event, payload){
+  try{ if(window.parent !== window) window.parent.postMessage(Object.assign({source:"mmg-coach-studio", event}, payload), "*"); }catch(e){}
+}
+
+const MAX_TURNS = 8;
+let history = [], turns = 0, busy = false, code = "";
+let mode = "coach";
+let audioEl = null;
+
+const $ = (id) => document.getElementById(id);
+const log = $("log");
+
+// ── SCENARIOS (client-side mirror of api/coach.js — keep the keys in sync) ──
+const SCENARIOS = {
+  generic: {
+    label: "Sell your solution (generic B2B)",
+    personaName: "Jordan Avery",
+    personaRole: "VP of Operations · Northwind Manufacturing",
+    initials: "JA",
+    coachName: "MMG Coach",
+    coachRole: "Powered by The Motivated Mind Group",
+    roleplayGreeting: "(Role-play) You're meeting Jordan Avery, VP of Operations at Northwind Manufacturing — six plants, a stretched team, and a board mandate to cut cost. You're selling YOUR solution. Your rubric scores update live on the right. You open.",
+    coachGreeting: "Hi — I'm your MMG Sales Coach. Tell me what you sell, who you're selling to, and what you're trying to figure out — or tap a starter below.",
+    starters: {
+      coach: [
+        ["Prep a discovery call", "I have a first call with a VP of Operations next week. Help me build my discovery plan."],
+        ["Quantify my value", "My solution saves teams about 10 hours a week. How do I turn that into a business case?"],
+        ["Handle 'send me a deck'", "The prospect keeps saying 'just send me a deck.' How do I keep the conversation alive?"],
+        ["Coach my pitch", "Here's my 30-second pitch — tear it apart and make it about the customer."],
+      ],
+      roleplay: [
+        ["Open the meeting", "Jordan, thanks for the time. Before I show you anything — what's putting the most pressure on your team right now?"],
+        ["Probe the pain", "You mentioned the cost mandate. Where is the money actually leaking today — labor, downtime, rework?"],
+      ],
+    },
+    instrCoach: "Ask anything about your deals — discovery plans, business cases, objection handling, pricing conversations. <b>Type</b> your question, tap <b>🎤 to say it</b>, or <b>📎 to upload your account plan</b> (.txt/.md) for feedback. Turn <b>Voice replies</b> on to hear the coach.",
+    instrRoleplay: "You're selling YOUR solution to <b>Jordan Avery</b>, a skeptical VP of Operations. Pick your <b>sales method</b> above — scoring follows it. Every message is scored 1–5 on the rubric (right panel) with a live coaching tip, and the avatar speaks the replies. <b>Type</b>, <b>🎤 say it</b>, or <b>📎 upload your call plan</b> to open. After a few exchanges, hit <b>Finish & get my scorecard</b>.",
+  },
+  "partner-economics": {
+    label: "Partner economics (channel)",
+    personaName: "Dana Chen",
+    personaRole: "VP of Platform Engineering · Meridian Health",
+    initials: "DC",
+    coachName: "Partner Economics Coach",
+    coachRole: "Powered by The Motivated Mind Group",
+    roleplayGreeting: "(Role-play) You're meeting Dana Chen, VP of Platform Engineering at Meridian Health — 60+ clusters, an overloaded platform team, and no patience for pitches. You're a channel partner selling a managed-services practice. You open.",
+    coachGreeting: "Hi — I'm the Partner Economics Coach. Tell me your partner type (MSP, VAR, ISV…) and what you're trying to figure out, or tap a starter below.",
+    starters: {
+      coach: [
+        ["MSP economics", "I'm an MSP building a managed-services practice. How do I make money?"],
+        ["ROBA vs ROWC", "What's the difference between ROBA and ROWC, and which should I focus on?"],
+        ["The “two games”", "Why are ISV partners valued differently than services partners?"],
+        ["Coach my numbers", "My gross margin is 35%, SG&A is 22%. Walk me through my operating margin and what to do."],
+      ],
+      roleplay: [
+        ["Open the meeting", "Dana, thanks for the time. Before I show you anything — what's driving the platform team hardest right now?"],
+        ["Probe the pain", "You mentioned upgrade toil. What does a typical upgrade cycle actually cost your team today?"],
+      ],
+    },
+    instrCoach: "Ask anything about how you make money as a channel partner — your P&L, ROBA/ROWC, services attach, pricing plays. <b>Type</b>, <b>🎤 say it</b>, or <b>📎 upload your account plan</b> for feedback.",
+    instrRoleplay: "You're selling to <b>Dana Chen</b>, a skeptical VP of Platform Engineering, as a channel partner. Pick your <b>sales method</b> above. Every message is scored 1–5 with a live coaching tip, and the avatar speaks the replies. After a few exchanges, hit <b>Finish & get my scorecard</b>.",
+  },
+};
+let scenarioKey = "generic";
+const scn = () => SCENARIOS[scenarioKey];
+
+// populate scenario dropdown
+(function(){
+  const sel = $("scenario");
+  Object.entries(SCENARIOS).forEach(([k,v])=>{
+    const o = document.createElement("option"); o.value = k; o.textContent = v.label; sel.appendChild(o);
+  });
+})();
+
+function bubble(role, text){
+  if(role === "system"){
+    const d = document.createElement("div");
+    d.className = "msg sys"; d.textContent = text; log.appendChild(d);
+    log.scrollTop = log.scrollHeight; return d;
+  }
+  const row = document.createElement("div");
+  row.className = "row " + (role === "user" ? "user" : "bot");
+  if(role !== "user"){
+    const av = document.createElement("div");
+    av.className = "avatar"; av.textContent = mode === "roleplay" ? scn().initials : "MMG";
+    row.appendChild(av);
+  }
+  const d = document.createElement("div");
+  d.className = "msg " + (role === "user" ? "user" : "bot");
+  d.textContent = text; row.appendChild(d);
+  log.appendChild(row); log.scrollTop = log.scrollHeight;
+  return row;
+}
+function updateMeta(){ $("meta").textContent = `Demo preview · ${Math.max(0, MAX_TURNS - turns)} of ${MAX_TURNS} exchanges left`; }
+function renderStarters(){
+  const s = $("starters"); s.innerHTML = "";
+  scn().starters[mode].forEach(([label,q])=>{
+    const b = document.createElement("button"); b.textContent = label; b.dataset.q = q; s.appendChild(b);
+  });
+  s.style.display = "flex";
+}
+function paintPersona(){
+  if(mode === "roleplay"){ $("personaName").textContent = scn().personaName; $("personaRole").textContent = scn().personaRole; }
+  else { $("personaName").textContent = scn().coachName; $("personaRole").textContent = scn().coachRole; }
+}
+function resetSession(greeting){
+  history = []; turns = 0; scoreLog = []; noteLog = []; updateMeta(); log.innerHTML = "";
+  $("finish").style.display = "none"; $("scorecard").style.display = "none";
+  document.querySelectorAll("#rubric .dim").forEach(d=>{ d.querySelector(".sc").textContent="–"; d.querySelectorAll(".bar i").forEach(i=>i.style.width="0"); });
+  $("coachnote").innerHTML = "<b>Coach:</b> scores and a coaching tip appear here after each message.";
+  bubble("bot", greeting); renderStarters(); paintPersona();
+}
+function setMode(m){
+  mode = m;
+  document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on", b.dataset.mode===m));
+  $("rubric").style.display = m === "roleplay" ? "block" : "none";
+  paintInstr();
+  resetSession(m === "roleplay" ? scn().roleplayGreeting : scn().coachGreeting);
+}
+let scoreLog = [];   // per-turn {discovery,acumen,value,method}
+let noteLog = [];    // coaching notes
+const DIMS = {discovery:"Discovery & listening", acumen:"Business acumen", value:"Quantified value", method:"Method fidelity"};
+const avg = (k) => scoreLog.length ? scoreLog.reduce((s,x)=>s+(x[k]||0),0)/scoreLog.length : 0;
+
+function paintScores(scores, coaching){
+  if(!scores) return;
+  scoreLog.push(scores);
+  if(coaching) noteLog.push(coaching);
+  document.querySelectorAll("#rubric .dim").forEach(d=>{
+    const k = d.dataset.d, v = Math.max(1, Math.min(5, Number(scores[k])||0));
+    const a = avg(k);
+    d.querySelector(".sc").textContent = `${v} / 5 · avg ${a.toFixed(1)}`;
+    const bar = d.querySelector(".bar:not(.avg) i");
+    bar.style.width = (v/5*100) + "%";
+    bar.className = v <= 2 ? "low" : v === 3 ? "mid" : "";
+    d.querySelector(".bar.avg i").style.width = (a/5*100) + "%";
+  });
+  if(coaching) $("coachnote").innerHTML = "<b>Coach:</b> " + coaching;
+  if(scoreLog.length >= 2) $("finish").style.display = "block";
+  postToHost("score", {
+    last: scores, coaching: coaching || "",
+    averages: Object.fromEntries(Object.keys(DIMS).map(k=>[k, +avg(k).toFixed(2)])),
+    exchanges: scoreLog.length,
+  });
+}
+
+$("finish").onclick = buildScorecard;
+async function buildScorecard(){
+  const methodName = $("method").options[$("method").selectedIndex].text;
+  $("sc-sub").textContent = `Scenario: ${scn().label} · Method: ${methodName} · ${scoreLog.length} scored exchanges · ${new Date().toLocaleDateString()}`;
+  const grid = $("sc-grid"); grid.innerHTML = "";
+  const half = Math.ceil(scoreLog.length/2);
+  Object.keys(DIMS).forEach(k=>{
+    const a = avg(k);
+    const first = scoreLog.slice(0,half).reduce((s,x)=>s+x[k],0)/half;
+    const second = scoreLog.slice(half).length ? scoreLog.slice(half).reduce((s,x)=>s+x[k],0)/scoreLog.slice(half).length : first;
+    const tr = second > first + 0.2 ? "▲ improving" : second < first - 0.2 ? "▼ declining" : "► steady";
+    grid.insertAdjacentHTML("beforeend",
+      `<div class="sc-cell"><div class="num">${a.toFixed(1)}</div><div class="lbl">${DIMS[k]}</div><div class="tr">${tr}</div></div>`);
+  });
+  $("scorecard").style.display = "block";
+  $("sc-narrative").textContent = "Generating the coach's assessment…";
+  $("scorecard").scrollIntoView({behavior:"smooth"});
+
+  const transcript = history.map(m => (m.role==="user"?"SELLER: ":"CUSTOMER: ") + m.content).join("\n");
+  const summaryReq = [{role:"user", content:
+    `Write a manager-ready session assessment of this sales role-play (method: ${methodName}). Per-turn rubric scores (1-5): ${JSON.stringify(scoreLog)}. Coaching notes given: ${JSON.stringify(noteLog)}.\n\nTranscript:\n${transcript.slice(0,6000)}\n\nFormat: 2 short paragraphs (overall performance; what to work on next), then "Strengths:" with 2 bullets and "Focus areas:" with 2 bullets. No preamble, no headers beyond those labels. Write about the learner in third person ("the rep").`}];
+  let narrative = "";
+  try{
+    const r = await fetch("/api/coach", {method:"POST",headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({messages: summaryReq, code, mode:"coach", method: $("method").value, scenario: scenarioKey})});
+    const data = await r.json();
+    narrative = data.reply || "";
+  }catch(e){}
+  if(!narrative){
+    narrative = "Assessment unavailable right now — scores above reflect the session. Try again in a moment.";
+  }
+  $("sc-narrative").textContent = narrative;
+
+  postToHost("finished", {
+    averages: Object.fromEntries(Object.keys(DIMS).map(k=>[k, +avg(k).toFixed(2)])),
+    overall: +(Object.keys(DIMS).reduce((s,k)=>s+avg(k),0)/4).toFixed(2), // 1..5
+    exchanges: scoreLog.length,
+    method: methodName, scenario: scenarioKey,
+    narrative,
+  });
+
+  const lines = Object.keys(DIMS).map(k=>`- ${DIMS[k]}: ${avg(k).toFixed(1)} / 5`).join("\n");
+  const body = `Session Scorecard — Sales Role-Play (MMG AI Coach & Role-Play Studio)\nScenario: ${scn().label} · Method: ${methodName} · ${scoreLog.length} scored exchanges · ${new Date().toLocaleDateString()}\n\nRubric averages:\n${lines}\n\nCoach's assessment:\n${narrative}\n\n— sent from the MMG AI Coach & Role-Play Studio (themotivatedmindgroup.com)`;
+  $("sc-mail").href = "mailto:?subject=" + encodeURIComponent("Role-play session scorecard — MMG AI Coach Studio") + "&body=" + encodeURIComponent(body.slice(0,1800));
+}
+
+// ── speaking avatar: lip-sync the SVG mouth to the ElevenLabs audio ──
+let actx = null, analyser = null, rafId = null;
+const mouth = $("mouth"), faceWrap = $("faceWrap");
+// blink loop
+setInterval(()=>{
+  const L = $("eyeL"), R = $("eyeR");
+  L.setAttribute("ry","0.5"); R.setAttribute("ry","0.5");
+  setTimeout(()=>{ L.setAttribute("ry","4"); R.setAttribute("ry","4"); }, 140);
+}, 3800);
+
+function lipsync(el){
+  try{
+    if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    const src = actx.createMediaElementSource(el);
+    analyser = actx.createAnalyser(); analyser.fftSize = 256;
+    src.connect(analyser); analyser.connect(actx.destination);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    if(rafId) cancelAnimationFrame(rafId);
+    const loop = ()=>{
+      analyser.getByteFrequencyData(data);
+      let sum = 0; for(let i=2;i<32;i++) sum += data[i];
+      const vol = sum / 30 / 255;                          // 0..1
+      const ry = 1.6 + Math.min(7, vol * 26);              // mouth opens with volume
+      mouth.setAttribute("ry", ry.toFixed(2));
+      mouth.setAttribute("rx", (8 - Math.min(3, vol*8)).toFixed(2));
+      if(el.paused || el.ended){ rafId = null; mouth.setAttribute("ry","1.6"); mouth.setAttribute("rx","8"); return; }
+      rafId = requestAnimationFrame(loop);
+    };
+    loop();
+  }catch(e){/* lip-sync is an enhancement — never block audio */}
+}
+function mouthRest(){ if(rafId){cancelAnimationFrame(rafId); rafId=null;} mouth.setAttribute("ry","1.6"); mouth.setAttribute("rx","8"); faceWrap.classList.remove("speaking"); }
+
+// ── HeyGen live avatar (optional photoreal mode) ──
+// Requires HEYGEN_API_KEY in Vercel env. Avatar/voice configurable via URL:
+// ?heygen_avatar=<interactive avatar id>&heygen_voice=<heygen voice id>
+let avMode = "svg", hgAvatar = null, hgStarting = false;
+const HG_AVATAR = PARAMS.get("heygen_avatar") || "Wayne_20240711";
+const HG_VOICE  = PARAMS.get("heygen_voice") || "";
+
+function loadHeyGenSDK(){
+  return new Promise((resolve, reject)=>{
+    if(window.StreamingAvatar) return resolve();
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@heygen/streaming-avatar@2/lib/index.umd.js";
+    s.onload = resolve; s.onerror = ()=>reject(new Error("sdk_load"));
+    document.head.appendChild(s);
+  });
+}
+async function startHeyGen(){
+  if(hgAvatar || hgStarting) return true;
+  hgStarting = true; $("avNote").textContent = "Connecting live avatar…";
+  try{
+    const tr = await fetch("/api/heygen-token", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code})});
+    if(!tr.ok){
+      const err = (await tr.json().catch(()=>({}))).error;
+      $("avNote").textContent = err === "not_configured" ? "Live avatar not connected yet (HeyGen key pending)." : "Live avatar unavailable — using illustrated.";
+      hgStarting = false; return false;
+    }
+    const { token } = await tr.json();
+    await loadHeyGenSDK();
+    const NS = window.StreamingAvatar;
+    const Ctor = NS && (NS.default || NS.StreamingAvatar || NS);
+    hgAvatar = new Ctor({ token });
+    hgAvatar.on("stream_ready", (e)=>{
+      const stream = (e && (e.detail || e.stream)) || e;
+      const v = $("hgVideo"); v.srcObject = stream; v.style.display = "block";
+      $("faceWrap").style.display = "none";
+      v.play().catch(()=>{});
+      $("avNote").textContent = "";
+    });
+    hgAvatar.on("stream_disconnected", ()=>{ stopHeyGen(); });
+    const cfg = { avatarName: HG_AVATAR, quality: "medium" };
+    if(HG_VOICE) cfg.voice = { voiceId: HG_VOICE };
+    await hgAvatar.createStartAvatar(cfg);
+    hgStarting = false; return true;
+  }catch(e){
+    $("avNote").textContent = "Live avatar unavailable — using illustrated.";
+    hgAvatar = null; hgStarting = false; return false;
+  }
+}
+function stopHeyGen(){
+  try{ if(hgAvatar) hgAvatar.stopAvatar(); }catch(e){}
+  hgAvatar = null;
+  $("hgVideo").style.display = "none"; $("hgVideo").srcObject = null;
+  $("faceWrap").style.display = "block";
+}
+$("avSeg").addEventListener("click", async (e)=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const want = b.dataset.av;
+  document.querySelectorAll("#avSeg button").forEach(x=>x.classList.toggle("on", x===b));
+  if(want === "heygen"){
+    avMode = "heygen";
+    const ok = await startHeyGen();
+    if(!ok){ avMode = "svg"; document.querySelectorAll("#avSeg button").forEach(x=>x.classList.toggle("on", x.dataset.av==="svg")); }
+  } else { avMode = "svg"; stopHeyGen(); $("avNote").textContent = ""; }
+});
+async function speakHeyGen(text){
+  try{ await hgAvatar.speak({ text: text.replace(/\*\*?/g,"").slice(0,1400), taskType: "repeat", task_type: "repeat" }); }
+  catch(e){ $("avNote").textContent = "Avatar hiccup — voice may drop this line."; }
+}
+
+async function speak(text){
+  if(!$("voice").checked) return;
+  if(avMode === "heygen" && hgAvatar){ speakHeyGen(text); return; }
+  try{
+    const r = await fetch("/api/speak", {method:"POST",headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({text, code})});
+    if(!r.ok) return; // silent — voice is enhancement, never blocks the demo
+    const blob = await r.blob();
+    if(audioEl){ audioEl.pause(); mouthRest(); }
+    audioEl = new Audio(URL.createObjectURL(blob));
+    audioEl.crossOrigin = "anonymous";
+    const avs = log.querySelectorAll(".avatar");
+    const av = avs[avs.length-1];
+    $("pause").style.display = "inline-block"; $("pause").textContent = "⏸";
+    audioEl.onplay  = () => { if(av) av.classList.add("speaking"); faceWrap.classList.add("speaking"); lipsync(audioEl); };
+    audioEl.onpause = () => { if(av) av.classList.remove("speaking"); mouthRest(); };
+    audioEl.onended = () => { if(av) av.classList.remove("speaking"); mouthRest(); $("pause").style.display = "none"; };
+    await audioEl.play().catch(()=>{ if(av) av.classList.remove("speaking"); mouthRest(); });
+  }catch(e){/* voice never blocks */}
+}
+
+$("enter").onclick = enter;
+$("code").addEventListener("keydown",(e)=>{ if(e.key==="Enter") enter(); });
+function enter(){
+  const v = $("code").value.trim();
+  if(!v){ $("gateErr").textContent = "Enter the access code."; return; }
+  code = v;
+  $("gate").style.display = "none"; $("app").style.display = "block";
+  setMode(mode); $("q").focus();
+}
+
+// ── embed-mode boot ──
+if(EMBED){
+  document.querySelector(".hero").style.display = "none";
+  document.querySelector(".foot").style.display = "none";
+  $("instr").style.display = "none"; $("instrShow").style.display = "inline-block";
+  const sc = PARAMS.get("scenario"); if(sc && SCENARIOS[sc]){ scenarioKey = sc; $("scenario").value = sc; }
+  const me = PARAMS.get("method"); if(me && document.querySelector(`#method option[value="${me}"]`)) $("method").value = me;
+  const mo = PARAMS.get("mode"); if(mo === "roleplay" || mo === "coach") mode = mo;
+  const c = PARAMS.get("code");
+  if(c){ $("code").value = c; enter(); }
+  if(PARAMS.get("avatar") === "heygen"){ document.querySelector('#avSeg button[data-av="heygen"]').click(); }
+  postToHost("ready", {mode, scenario: scenarioKey});
+}
+$("modeSeg").addEventListener("click",(e)=>{ const b=e.target.closest("button"); if(b && !busy) setMode(b.dataset.mode); });
+$("scenario").addEventListener("change",()=>{ if(busy) return; scenarioKey = $("scenario").value; setMode(mode); });
+
+// ---- instructions bubble ----
+function paintInstr(){ $("instrBody").innerHTML = mode === "roleplay" ? scn().instrRoleplay : scn().instrCoach; }
+$("instrMin").onclick = ()=>{ $("instr").style.display="none"; $("instrShow").style.display="inline-block"; };
+$("instrShow").onclick = ()=>{ $("instr").style.display="block"; $("instrShow").style.display="none"; };
+
+// ---- pause / resume voice ----
+$("pause").onclick = ()=>{
+  if(!audioEl) return;
+  if(audioEl.paused){ audioEl.play(); $("pause").textContent="⏸"; }
+  else { audioEl.pause(); $("pause").textContent="▶"; }
+};
+
+// ---- say your plan (speech-to-text) ----
+let rec = null, listening = false;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+$("mic").onclick = ()=>{
+  if(!SR){ bubble("system","Voice input isn't supported in this browser — Chrome or Edge works."); return; }
+  if(listening){ rec.stop(); return; }
+  rec = new SR(); rec.lang = "en-US"; rec.interimResults = true; rec.continuous = false;
+  listening = true; $("mic").style.background = "var(--pink)"; $("q").placeholder = "Listening… speak, tap 🎤 again to stop";
+  rec.onresult = (e)=>{ $("q").value = [...e.results].map(r=>r[0].transcript).join(" "); };
+  rec.onend = ()=>{ listening = false; $("mic").style.background = "var(--lav)"; $("q").placeholder = "Type your message, tap 🎤 to say it, or 📎 to upload your plan…"; $("q").focus(); };
+  rec.onerror = rec.onend;
+  rec.start();
+};
+
+// ---- upload your plan ----
+$("upload").onclick = ()=>$("planfile").click();
+$("planfile").addEventListener("change", async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  if(f.size > 60000){ bubble("system","That file's a bit large for the demo — keep plans under ~60KB of text."); e.target.value=""; return; }
+  const text = await f.text();
+  $("q").value = (mode==="roleplay" ? "Here's my call plan — I'll open from it: " : "Here's my plan — coach me on it: ") + text.slice(0, 3200);
+  e.target.value = "";
+  bubble("system", `Plan loaded from "${f.name}" — review the message, then Send.`);
+  $("q").focus();
+});
+$("method").addEventListener("change", ()=>{ if(mode==="roleplay" && history.length){ bubble("system","Sales method switched — scoring now follows " + $("method").options[$("method").selectedIndex].text + "."); } });
+$("starters").addEventListener("click",(e)=>{ const b=e.target.closest("button"); if(!b) return; $("q").value = b.dataset.q; ask(); });
+$("send").onclick = ask;
+$("q").addEventListener("keydown",(e)=>{ if(e.key==="Enter") ask(); });
+
+async function ask(){
+  if(busy) return;
+  const text = $("q").value.trim();
+  if(!text) return;
+  if(turns >= MAX_TURNS){ bubble("system","Demo limit reached. The full studio runs unmetered for enrolled teams."); return; }
+
+  busy = true; $("send").disabled = true; $("q").value = "";
+  $("starters").style.display = "none";
+  bubble("user", text);
+  history.push({role:"user", content:text});
+  turns++; updateMeta();
+
+  const typing = document.createElement("div");
+  typing.className = "typing";
+  typing.textContent = mode === "roleplay" ? `${scn().personaName.split(" ")[0]} is replying… (and the coach is scoring you)` : "Coach is thinking…";
+  log.appendChild(typing); log.scrollTop = log.scrollHeight;
+
+  try{
+    const r = await fetch("/api/coach", {method:"POST",headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({messages: history, code, mode, method: $("method").value, scenario: scenarioKey})});
+    typing.remove();
+    if(r.status === 403){ bubble("system","Access code not recognized. Refresh and try again."); busy=false; $("send").disabled=false; return; }
+    const data = await r.json();
+    if(data.error){ bubble("system", data.error==="not_configured" ? "The coach isn't connected yet." : "Something went wrong — try again in a moment."); busy=false; $("send").disabled=false; return; }
+    const reply = data.reply || "(no response)";
+    bubble("bot", reply);
+    history.push({role:"assistant", content:reply});
+    if(mode === "roleplay") paintScores(data.scores, data.coaching);
+    if(data.capped){ turns = MAX_TURNS; updateMeta(); }
+    speak(reply); // fire-and-forget
+  }catch(e){
+    typing.remove(); bubble("system","Network error — try again.");
+  }
+  busy = false; $("send").disabled = false; $("q").focus();
+}
+</script>
+</body>
+</html>

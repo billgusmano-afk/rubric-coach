@@ -39,7 +39,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
             <div className="w-2 h-2 bg-accent rounded-full" />
-            <h1 className="font-serif text-2xl text-accent">RubricCoach</h1>
+            <h1 className="font-serif text-2xl text-ink">MMG Coach Studio</h1>
           </div>
           <p className="text-ink-3 text-sm">Sign in to your account</p>
         </div>
@@ -85,18 +85,23 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors disabled:opacity-50"
+            className="w-full py-2.5 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
 
           <p className="mt-4 text-center text-sm text-ink-3">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-accent font-medium hover:underline">
+            <Link href="/signup" className="text-ink font-medium underline hover:no-underline">
               Sign up
             </Link>
           </p>
         </form>
+
+        <p className="mt-6 text-center text-[11px] text-ink-3 leading-relaxed">
+          &copy; 2026 The Motivated Mind Group Inc. | 480-219-2875 |
+          support@themotivatedmindgroup.com | 260 S Arizona Ave, Chandler AZ 85225
+        </p>
       </div>
     </div>
   );

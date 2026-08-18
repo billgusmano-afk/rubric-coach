@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMG AI Coach &amp; Role-Play Studio — demo reel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@600&family=Open+Sans:wght@400;600;700&display=swap');
+  :root{--ink:#1D1D1B;--pink:#FF97A9;--pink-mid:#FFE3E9;--lav:#8A5FBE;
+    --grad:linear-gradient(45deg,#FF8BAE 20%,#FF8F8B 80%);--bg:#FDF5F6;--panel:#F6E9EC;--gray-600:#5c5c5c;--gray-300:#E5D9DC;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Open Sans',system-ui,sans-serif;color:var(--ink);background:var(--ink);line-height:1.5;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  /* 1080x1080-friendly square stage for LinkedIn capture */
+  #stage{width:min(92vmin,1080px);height:min(92vmin,1080px);background:var(--bg);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  .hero{background:var(--ink);color:#fff;padding:16px 26px;border-bottom:4px solid transparent;border-image:var(--grad) 1;}
+  .hero .kick{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);font-weight:700;}
+  .hero h1{font-family:'Source Serif Pro',Georgia,serif;font-weight:600;font-size:22px;}
+  .main{flex:1;display:grid;grid-template-columns:1fr 240px;gap:14px;padding:16px 20px;min-height:0;}
+  #chat{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);display:flex;flex-direction:column;overflow:hidden;}
+  #log{flex:1;padding:16px;overflow:hidden;display:flex;flex-direction:column;gap:10px;justify-content:flex-end;}
+  .row{display:flex;gap:9px;align-items:flex-end;animation:in .4s ease;}
+  @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .row.user{justify-content:flex-end;}
+  .msg{max-width:82%;padding:10px 13px;border-radius:14px;font-size:15px;}
+  .msg.user{background:var(--ink);color:#fff;border-bottom-right-radius:4px;}
+  .msg.bot{background:var(--pink-mid);border-bottom-left-radius:4px;}
+  .who{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 32px;}
+  .typing{color:var(--gray-600);font-size:13px;font-style:italic;padding:4px 16px 12px;}
+  .side{display:flex;flex-direction:column;gap:12px;min-height:0;}
+  #persona{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);padding:14px;text-align:center;}
+  #faceWrap{width:110px;height:110px;margin:0 auto;border-radius:50%;padding:4px;background:var(--grad);}
+  #faceWrap.speaking{animation:glow 1.2s ease-in-out infinite;}
+  @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,151,169,.55)}50%{box-shadow:0 0 0 10px rgba(255,151,169,0)}}
+  #faceWrap svg{display:block;width:100%;height:100%;border-radius:50%;background:#fff;}
+  #pname{font-family:'Source Serif Pro',Georgia,serif;font-weight:600;font-size:15px;margin-top:8px;}
+  #prole{font-size:11px;color:var(--gray-600);}
+  #rubric{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(29,29,27,.07);padding:14px;flex:1;}
+  #rubric h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-600);margin-bottom:10px;}
+  .dim{margin-bottom:10px;}
+  .dim .lab{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px;}
+  .dim .lab .sc{color:var(--gray-600);font-weight:600;}
+  .bar{height:8px;background:var(--panel);border-radius:6px;overflow:hidden;}
+  .bar i{display:block;height:100%;background:var(--grad);border-radius:6px;width:0;transition:width .8s ease;}
+  #note{background:var(--pink-mid);border-radius:10px;padding:9px 11px;font-size:11.5px;min-height:52px;}
+  .foot{background:var(--ink);color:#fff;text-align:center;padding:10px;font-size:12px;}
+  .foot b{color:var(--pink);}
+  /* end card */
+  #endcard{position:absolute;inset:0;background:var(--ink);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;opacity:0;pointer-events:none;transition:opacity .8s ease;}
+  #endcard.show{opacity:1;}
+  #endcard .kick{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);font-weight:700;margin-bottom:10px;}
+  #endcard h2{font-family:'Source Serif Pro',Georgia,serif;font-weight:600;font-size:34px;max-width:700px;}
+  #endcard p{font-size:17px;opacity:.85;margin:16px 0 24px;max-width:600px;}
+  #endcard .cta{background:var(--grad);color:var(--ink);border-radius:28px;padding:13px 26px;font-weight:800;font-size:16px;}
+  .scpill{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center;}
+  .scpill span{background:rgba(255,255,255,.1);border:1px solid rgba(255,151,169,.5);border-radius:20px;padding:7px 14px;font-size:13px;}
+  .scpill b{color:var(--pink);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="hero">
+    <div class="kick">The Motivated Mind Group</div>
+    <h1>AI Coach &amp; Role-Play Studio</h1>
+  </div>
+  <div class="main">
+    <div id="chat"><div id="log"></div><div class="typing" id="typing"></div></div>
+    <div class="side">
+      <div id="persona">
+        <div id="faceWrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="20%" stop-color="#FF8BAE"/><stop offset="80%" stop-color="#FF8F8B"/></linearGradient></defs>
+            <circle cx="60" cy="60" r="58" fill="#fff"/>
+            <path d="M20 118 Q22 88 60 88 Q98 88 100 118 Z" fill="url(#mg)" stroke="#1D1D1B" stroke-width="2"/>
+            <circle cx="60" cy="52" r="30" fill="#fff" stroke="#1D1D1B" stroke-width="2"/>
+            <path d="M30 48 Q30 20 60 20 Q90 20 90 48 Q78 40 60 40 Q42 40 30 48 Z" fill="url(#mg)" stroke="#1D1D1B" stroke-width="2"/>
+            <ellipse id="eyeL" cx="49" cy="50" rx="3.2" ry="4" fill="#1D1D1B"/>
+            <ellipse id="eyeR" cx="71" cy="50" rx="3.2" ry="4" fill="#1D1D1B"/>
+            <ellipse id="mouth" cx="60" cy="68" rx="8" ry="1.6" fill="#1D1D1B"/>
+          </svg>
+        </div>
+        <div id="pname">Jordan Avery</div>
+        <div id="prole">VP of Operations — your AI customer</div>
+      </div>
+      <div id="rubric">
+        <h3>Live rubric · scored every message</h3>
+        <div class="dim" data-d="discovery"><div class="lab"><span>Discovery</span><span class="sc">–</span></div><div class="bar"><i></i></div></div>
+        <div class="dim" data-d="acumen"><div class="lab"><span>Business acumen</span><span class="sc">–</span></div><div class="bar"><i></i></div></div>
+        <div class="dim" data-d="value"><div class="lab"><span>Quantified value</span><span class="sc">–</span></div><div class="bar"><i></i></div></div>
+        <div class="dim" data-d="method"><div class="lab"><span>Method fidelity</span><span class="sc">–</span></div><div class="bar"><i></i></div></div>
+        <div id="note"><b>Coach:</b> live coaching after every message.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">Practice the conversation before it counts — <b>speaks, listens, and scores in real time</b></div>
+
+  <div id="endcard">
+    <div class="kick">The Motivated Mind Group</div>
+    <h2>Your reps' next tough customer should be practice, not pipeline.</h2>
+    <p>AI role-play with a talking customer, live rubric scoring against your sales method, and a manager-ready scorecard. Branded for your team, embedded in your training or your LMS.</p>
+    <div class="cta">📅 themotivatedmindgroup.com — book 15 minutes</div>
+    <div class="scpill"><span>Discovery <b>4.5</b></span><span>Acumen <b>4.0</b></span><span>Value <b>4.5</b></span><span>Method <b>4.0</b></span></div>
+  </div>
+</div>
+
+<script>
+// Scripted demo reel — no API calls; loops forever. Screen-record for LinkedIn.
+const $ = id => document.getElementById(id);
+const log = $("log"), typing = $("typing"), mouth = $("mouth"), face = $("faceWrap");
+
+// blink
+setInterval(()=>{ $("eyeL").setAttribute("ry",".5"); $("eyeR").setAttribute("ry",".5");
+  setTimeout(()=>{ $("eyeL").setAttribute("ry","4"); $("eyeR").setAttribute("ry","4"); },140); }, 3600);
+
+let talkTimer = null;
+function talk(ms){
+  face.classList.add("speaking");
+  const t0 = performance.now();
+  cancelAnimationFrame(talkTimer);
+  const anim = (t)=>{
+    if(t - t0 > ms){ mouth.setAttribute("ry","1.6"); mouth.setAttribute("rx","8"); face.classList.remove("speaking"); return; }
+    const v = (Math.sin(t/70)+1)/2 * (0.6 + 0.4*Math.sin(t/230));
+    mouth.setAttribute("ry",(1.6 + v*6).toFixed(2));
+    mouth.setAttribute("rx",(8 - v*2.5).toFixed(2));
+    talkTimer = requestAnimationFrame(anim);
+  };
+  talkTimer = requestAnimationFrame(anim);
+}
+function bubble(role, text){
+  const row = document.createElement("div");
+  row.className = "row " + (role==="user"?"user":"bot");
+  if(role!=="user"){ const w=document.createElement("div"); w.className="who"; w.textContent="JA"; row.appendChild(w); }
+  const d = document.createElement("div"); d.className = "msg "+(role==="user"?"user":"bot"); d.textContent = text;
+  row.appendChild(d); log.appendChild(row);
+  while(log.children.length > 6) log.removeChild(log.firstChild);
+}
+function scores(s, note){
+  document.querySelectorAll(".dim").forEach(d=>{
+    const k=d.dataset.d, v=s[k];
+    d.querySelector(".sc").textContent = v + " / 5";
+    d.querySelector(".bar i").style.width = (v/5*100)+"%";
+  });
+  if(note) $("note").innerHTML = "<b>Coach:</b> " + note;
+}
+
+// [delay ms, fn]
+const SCRIPT = [
+  [800, ()=>bubble("bot","Look, I've got twenty minutes and a cost mandate from the board. What have you got?")],
+  [400, ()=>talk(2600)],
+  [3200, ()=>bubble("user","Before I show you anything — where is the money actually leaking today: labor, downtime, or rework?")],
+  [1400, ()=>{ typing.textContent="Jordan is replying… (and the coach is scoring you)"; }],
+  [1800, ()=>{ typing.textContent=""; bubble("bot","Honestly? Rework. Two of our six plants re-run about 8% of orders. Nobody's put a number on it."); talk(3400); scores({discovery:4, acumen:3, value:3, method:4}, "Strong opening question — now quantify that 8% before you pitch anything."); }],
+  [4600, ()=>bubble("user","Let's put a number on it. 8% rework across two plants — what does a re-run order cost you, roughly?")],
+  [1400, ()=>{ typing.textContent="Jordan is replying…"; }],
+  [1800, ()=>{ typing.textContent=""; bubble("bot","Around $400 a pop, maybe 300 orders a month. …I hadn't done that math. That's over a million a year."); talk(3600); scores({discovery:5, acumen:4, value:4, method:4}, "Excellent — the customer just built your business case for you. Anchor to that $1M+."); }],
+  [4800, ()=>bubble("user","So if we cut that rework in half, that's ~$700K a year back — against a program that costs a fraction of that. Worth a pilot in one plant?")],
+  [1600, ()=>{ typing.textContent="Scoring…"; }],
+  [1500, ()=>{ typing.textContent=""; bubble("bot","Half is a big claim. But yes — bring me a one-plant pilot plan and I'll get you in front of the team."); talk(3200); scores({discovery:4.5, acumen:4, value:4.5, method:4}, "Value framed in THEIR numbers with a low-risk next step. Manager-ready scorecard unlocked."); }],
+  [5200, ()=>$("endcard").classList.add("show")],
+  [7000, ()=>{ $("endcard").classList.remove("show"); log.innerHTML=""; scores({discovery:0,acumen:0,value:0,method:0}); document.querySelectorAll(".sc").forEach(e=>e.textContent="–"); $("note").innerHTML="<b>Coach:</b> live coaching after every message."; }],
+];
+async function run(){
+  for(;;){ for(const [d,fn] of SCRIPT){ await new Promise(r=>setTimeout(r,d)); fn(); } await new Promise(r=>setTimeout(r,1200)); }
+}
+run();
+</script>
+</body>
+</html>

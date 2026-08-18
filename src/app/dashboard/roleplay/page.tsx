@@ -392,7 +392,6 @@ export default function RoleplayPage() {
         `session_${data.session_id}`,
         JSON.stringify({
           session_id: data.session_id,
-          system_prompt: data.system_prompt,
           opening_message: data.opening_message,
           company_name: research?.company_name || companyInput,
           meeting_type: meetingType,
@@ -457,7 +456,7 @@ export default function RoleplayPage() {
               <button
                 onClick={researchClient}
                 disabled={researching || !companyInput.trim()}
-                className="px-3 py-1.5 bg-accent text-white rounded-sm text-xs font-medium hover:bg-[#4a3ce0] transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-ink text-white rounded-sm text-xs font-medium hover:bg-ink-2 transition-colors disabled:opacity-50"
               >
                 {researching ? "Researching..." : "Research ↗"}
               </button>
@@ -536,8 +535,8 @@ export default function RoleplayPage() {
                   onClick={() => setRelationshipStage(s)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     relationshipStage === s
-                      ? "border-accent bg-accent/[0.08] text-accent"
-                      : "border-border text-ink-3 hover:border-accent hover:text-accent"
+                      ? "border-accent bg-accent/15 text-ink"
+                      : "border-border text-ink-3 hover:border-accent hover:text-ink"
                   }`}
                 >
                   {s}
@@ -555,8 +554,8 @@ export default function RoleplayPage() {
                   onClick={() => setMeetingType(m)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     meetingType === m
-                      ? "border-accent bg-accent/[0.08] text-accent"
-                      : "border-border text-ink-3 hover:border-accent hover:text-accent"
+                      ? "border-accent bg-accent/15 text-ink"
+                      : "border-border text-ink-3 hover:border-accent hover:text-ink"
                   }`}
                 >
                   {m}
@@ -617,7 +616,7 @@ export default function RoleplayPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      discProfile === d.letter ? "bg-accent text-white" : "bg-surface text-ink-2"
+                      discProfile === d.letter ? "bg-accent text-ink" : "bg-surface text-ink-2"
                     }`}
                   >
                     {d.letter}
@@ -675,7 +674,7 @@ export default function RoleplayPage() {
                   >
                     {fw.tag}
                   </span>
-                  {selected && <div className="mt-2 text-accent text-xs font-medium">✓ Selected</div>}
+                  {selected && <div className="mt-2 text-ink text-xs font-medium">✓ Selected</div>}
                 </button>
               );
             })}
@@ -695,7 +694,7 @@ export default function RoleplayPage() {
                     Custom
                   </span>
                   <div className="text-xs text-ink-3 mt-1">{fw.criteria?.length || 0} criteria</div>
-                  {selected && <div className="mt-2 text-accent text-xs font-medium">✓ Selected</div>}
+                  {selected && <div className="mt-2 text-ink text-xs font-medium">✓ Selected</div>}
                 </button>
               );
             })}
@@ -800,9 +799,9 @@ export default function RoleplayPage() {
             disabled={!canLaunch || starting}
             className={`px-6 py-2.5 rounded-sm text-sm font-medium transition-all flex items-center gap-2 ${
               canLaunch && !starting
-                ? "bg-accent text-white hover:bg-[#4a3ce0] shadow-card"
+                ? "bg-ink text-white hover:bg-ink-2 shadow-card"
                 : starting
-                ? "bg-accent/80 text-white cursor-wait"
+                ? "bg-ink/80 text-white cursor-wait"
                 : "bg-surface text-ink-3 cursor-not-allowed"
             }`}
           >

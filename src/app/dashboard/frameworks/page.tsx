@@ -64,13 +64,13 @@ export default function FrameworksPage() {
                 <div className="flex gap-2">
                   <Link
                     href={`/dashboard/builder?edit=${fw.id}`}
-                    className="px-3 py-1.5 bg-white text-accent border border-border rounded-sm text-xs font-medium hover:border-accent transition-colors"
+                    className="px-3 py-1.5 bg-white text-ink border border-border rounded-sm text-xs font-medium hover:border-accent transition-colors"
                   >
                     Edit
                   </Link>
                   <Link
                     href="/dashboard/roleplay"
-                    className="px-3 py-1.5 bg-accent text-white rounded-sm text-xs font-medium hover:bg-[#4a3ce0] transition-colors"
+                    className="px-3 py-1.5 bg-ink text-white rounded-sm text-xs font-medium hover:bg-ink-2 transition-colors"
                   >
                     Practice
                   </Link>
@@ -96,7 +96,7 @@ export default function FrameworksPage() {
               </div>
               <Link
                 href="/dashboard/builder"
-                className="px-4 py-2 bg-white text-accent border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors"
+                className="px-4 py-2 bg-white text-ink border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors"
               >
                 Build Rubric
               </Link>

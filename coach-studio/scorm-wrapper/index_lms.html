@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMG AI Coach &amp; Role-Play Studio</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#FDF5F6;}
+  iframe{border:0;width:100%;height:100%;display:block;}
+</style>
+</head>
+<body>
+<!-- ── CONFIGURE PER CLIENT ─────────────────────────────────────────────
+     Point at the hosted studio with the client's scenario + access code.
+     The studio posts {source:'mmg-coach-studio', event:'score'|'finished'}
+     messages; this wrapper relays them to the LMS via SCORM 1.2.        -->
+<script>
+var STUDIO_URL = "https://mmg-coach-studio.vercel.app/?embed=1&mode=roleplay&scenario=generic&method=consultative&code=MMG2026";
+var PASS_PERCENT = 60; // overall (avg of 4 rubric dims, 1-5) mapped to 0-100
+</script>
+
+<iframe id="studio" allow="microphone; autoplay" allowfullscreen></iframe>
+
+<script>
+// ── SCORM 1.2 API discovery ──
+function findAPI(win){
+  var tries = 0;
+  while(win && tries < 10){
+    if(win.API) return win.API;
+    if(win.parent === win) break;
+    win = win.parent; tries++;
+  }
+  try{ if(window.opener) return findAPI(window.opener); }catch(e){}
+  return null;
+}
+var API = findAPI(window), inited = false, finished = false;
+function lms(fn, a, b){ try{ return API ? API[fn](a===undefined?"":a, b===undefined?"":b) : "false"; }catch(e){ return "false"; } }
+if(API){
+  inited = lms("LMSInitialize","") === "true";
+  if(inited && lms("LMSGetValue","cmi.core.lesson_status") === "not attempted"){
+    lms("LMSSetValue","cmi.core.lesson_status","incomplete");
+    lms("LMSCommit","");
+  }
+}
+
+document.getElementById("studio").src = STUDIO_URL;
+
+var studioOrigin = new URL(STUDIO_URL).origin;
+window.addEventListener("message", function(e){
+  if(e.origin !== studioOrigin) return;
+  var d = e.data || {};
+  if(d.source !== "mmg-coach-studio" || !inited) return;
+
+  if(d.event === "score" && d.averages){
+    var overall = (d.averages.discovery + d.averages.acumen + d.averages.value + d.averages.method) / 4;
+    lms("LMSSetValue","cmi.core.score.min","0");
+    lms("LMSSetValue","cmi.core.score.max","100");
+    lms("LMSSetValue","cmi.core.score.raw", String(Math.round(overall/5*100)));
+    lms("LMSCommit","");
+  }
+  if(d.event === "finished"){
+    finished = true;
+    var pct = Math.round((d.overall||0)/5*100);
+    lms("LMSSetValue","cmi.core.score.min","0");
+    lms("LMSSetValue","cmi.core.score.max","100");
+    lms("LMSSetValue","cmi.core.score.raw", String(pct));
+    lms("LMSSetValue","cmi.core.lesson_status", pct >= PASS_PERCENT ? "passed" : "completed");
+    lms("LMSCommit","");
+  }
+});
+
+window.addEventListener("beforeunload", function(){
+  if(inited){
+    if(!finished){ lms("LMSSetValue","cmi.core.exit","suspend"); }
+    lms("LMSCommit",""); lms("LMSFinish","");
+  }
+});
+</script>
+</body>
+</html>

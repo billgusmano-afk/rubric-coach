@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           },
           items: [
             {
-              name: "RubricCoach Pro Plan",
+              name: "MMG Coach Studio Pro Plan",
               description: "Monthly subscription — includes 1 framework",
               unit_amount: { currency_code: "USD", value: PRICING.PRO_PLAN_MONTHLY },
               quantity: "1",
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       payment_source: {
         paypal: {
           experience_context: {
-            brand_name: "RubricCoach",
+            brand_name: "MMG Coach Studio",
             landing_page: "LOGIN",
             user_action: "PAY_NOW",
             return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true`,

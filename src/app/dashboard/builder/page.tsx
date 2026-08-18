@@ -320,7 +320,7 @@ export default function BuilderPage() {
 
           {/* AI suggestion panel */}
           <div className="p-3 bg-accent/[0.06] border border-accent/15 rounded-sm text-xs text-ink-3">
-            <span className="text-accent font-semibold">AI Coach &rarr;</span>{" "}
+            <span className="text-ink font-semibold">AI Coach &rarr;</span>{" "}
             {aiSuggestions
               ? `${aiSuggestions.length} criteria suggested. Click to add.`
               : "Describe your selling motion above, then let AI suggest scoring criteria."}
@@ -328,7 +328,7 @@ export default function BuilderPage() {
               <button
                 onClick={suggestCriteria}
                 disabled={aiLoading || !sellingMotion.trim()}
-                className="px-3 py-1.5 bg-accent text-white rounded-sm text-xs font-medium hover:bg-[#4a3ce0] transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-ink text-white rounded-sm text-xs font-medium hover:bg-ink-2 transition-colors disabled:opacity-50"
               >
                 {aiLoading ? "Generating..." : "Generate Criteria"}
               </button>
@@ -395,7 +395,7 @@ export default function BuilderPage() {
             </span>
             <button
               onClick={addCriterion}
-              className="px-3 py-1.5 bg-white text-accent border border-border rounded-sm text-xs font-medium hover:border-accent transition-colors"
+              className="px-3 py-1.5 bg-white text-ink border border-border rounded-sm text-xs font-medium hover:border-accent transition-colors"
             >
               + Add Criterion
             </button>
@@ -410,7 +410,7 @@ export default function BuilderPage() {
             >
               <div className="flex items-center gap-2.5">
                 <span className="font-semibold text-[13px]">{c.name || "New Criterion"}</span>
-                <span className="inline-flex px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-accent/10 text-accent">
+                <span className="inline-flex px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-accent/20 text-ink">
                   Weight: {c.weight_percent}%
                 </span>
               </div>
@@ -474,7 +474,7 @@ export default function BuilderPage() {
                 <div className="grid grid-cols-5 gap-2">
                   {c.score_levels.map((sl, li) => (
                     <div key={sl.level} className="border border-border rounded-md p-2 text-center text-[11px]">
-                      <div className="text-base font-bold text-accent mb-0.5">{sl.level}</div>
+                      <div className="text-base font-bold text-ink mb-0.5">{sl.level}</div>
                       <input
                         className="w-full text-center font-semibold text-ink text-[11px] border-none outline-none bg-transparent mb-0.5"
                         value={sl.label}
@@ -499,13 +499,13 @@ export default function BuilderPage() {
           <button
             onClick={saveFramework}
             disabled={saving}
-            className="px-4 py-2.5 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors disabled:opacity-50"
           >
             {saving ? "Saving..." : editId ? "Update Framework" : "Save Framework"}
           </button>
           <button
             onClick={() => router.push("/dashboard/frameworks")}
-            className="px-4 py-2.5 bg-white text-accent border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors"
+            className="px-4 py-2.5 bg-white text-ink border border-border rounded-sm text-sm font-medium hover:border-accent transition-colors"
           >
             Cancel
           </button>

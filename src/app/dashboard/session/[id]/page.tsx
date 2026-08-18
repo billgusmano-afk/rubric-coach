@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 // Avatar ID and Voice ID are now passed server-side via the token API route
 
@@ -31,7 +32,6 @@ interface CompanyResearch {
 
 interface SessionData {
   session_id: string;
-  system_prompt: string;
   opening_message: string;
   company_name: string;
   meeting_type: string;
@@ -133,25 +133,88 @@ export default function SessionPage() {
   }, []);
   const { isListening, startListening, stopListening } = useSpeechRecognition(handleSpeechResult);
 
-  // Load session data from sessionStorage
+  // Load session data — sessionStorage first (fast path, set by roleplay page),
+  // falling back to the DB so a page refresh doesn't kill a live session.
   useEffect(() => {
+    let cancelled = false;
+
+    async function rehydrateFromDb() {
+      const supabase = createClient();
+      const { data: session } = await supabase
+        .from("sessions")
+        .select(
+          "id, company_name, meeting_type, disc_profile, disc_blend, framework_ids, preset_framework_ids, voice_enabled, mic_enabled, company_research, partner_name, partner_role, partner_solution, relationship_stage, proposal, objective, expected_objection, ended_at"
+        )
+        .eq("id", sessionId)
+        .single();
+
+      // Only redirect if the session doesn't exist / isn't theirs / already ended
+      if (!session || session.ended_at) {
+        if (!cancelled) router.push("/dashboard/roleplay");
+        return;
+      }
+
+      const { data: history } = await supabase
+        .from("session_messages")
+        .select("role, content")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true });
+
+      if (cancelled) return;
+
+      const chatHistory: ChatMessage[] = (history || []).map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+      setSessionData({
+        session_id: session.id,
+        opening_message: chatHistory[0]?.content ?? "",
+        company_name: session.company_name,
+        meeting_type: session.meeting_type,
+        disc_profile: session.disc_profile,
+        framework_ids: [
+          ...(session.preset_framework_ids || []),
+          ...(session.framework_ids || []),
+        ],
+        voice_enabled: session.voice_enabled,
+        mic_enabled: session.mic_enabled,
+        company_research: session.company_research,
+        partner_name: session.partner_name || undefined,
+        partner_role: session.partner_role || undefined,
+        partner_solution: session.partner_solution || undefined,
+        relationship_stage: session.relationship_stage || undefined,
+        proposal: session.proposal || undefined,
+        objective: session.objective || undefined,
+        expected_objection: session.expected_objection || undefined,
+        disc_blend: session.disc_blend || undefined,
+      });
+      setMessages(chatHistory);
+      setLoading(false);
+    }
+
     try {
       const stored = sessionStorage.getItem(`session_${sessionId}`);
       if (stored) {
         const data = JSON.parse(stored) as SessionData;
         setSessionData(data);
         setMessages([{ role: "assistant", content: data.opening_message }]);
+        setLoading(false);
 
         // Voice will play when user clicks "Begin Session" button
         // (Chrome requires a user gesture before playing audio)
-      } else {
-        // No session data found — redirect back
-        router.push("/dashboard/roleplay");
+        return;
       }
     } catch {
-      router.push("/dashboard/roleplay");
+      /* fall through to DB rehydration */
     }
-    setLoading(false);
+
+    // No sessionStorage (page refresh / new tab) — rehydrate from the DB
+    rehydrateFromDb();
+
+    return () => {
+      cancelled = true;
+    };
   }, [sessionId, router]);
 
   // Timer
@@ -203,7 +266,7 @@ export default function SessionPage() {
     let binary = "";
     for (let i = 0; i < bytes.length; i += chunkSize) {
       const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
-      binary += String.fromCharCode(...chunk);
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
     }
     return btoa(binary);
   }
@@ -429,8 +492,6 @@ export default function SessionPage() {
         body: JSON.stringify({
           session_id: sessionId,
           message: msg,
-          system_prompt: sessionData.system_prompt,
-          framework_ids: sessionData.framework_ids,
         }),
       });
       if (res.ok) {
@@ -571,7 +632,7 @@ export default function SessionPage() {
 
         <button
           onClick={handleBeginSession}
-          className="px-8 py-3 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors shadow-card"
+          className="px-8 py-3 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors shadow-card"
         >
           ▶ Begin Session
         </button>
@@ -718,7 +779,7 @@ export default function SessionPage() {
                         </div>
                       )}
                       <div className="pt-1 flex flex-wrap gap-1.5">
-                        <span className="inline-flex px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-semibold rounded-full">
+                        <span className="inline-flex px-2 py-0.5 bg-accent/20 text-ink text-[10px] font-semibold rounded-full">
                           DISC: {sessionData.disc_profile}
                           {sessionData.disc_blend && sessionData.disc_blend !== "single"
                             ? ` (${sessionData.disc_blend})`
@@ -759,12 +820,12 @@ export default function SessionPage() {
               </span>
               {sessionData.voice_enabled && (
                 <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${
-                  avatarLoading && !avatarReady ? "bg-gold/10 text-[#92400e]" :
-                  voiceStatus === "playing" ? "bg-green/10 text-green animate-pulse" :
-                  voiceStatus === "loading" ? "bg-gold/10 text-[#92400e]" :
-                  voiceStatus === "error" ? "bg-red/10 text-red" :
-                  avatarReady && displayMode === "avatar" ? "bg-green/10 text-green" :
-                  "bg-accent/[0.08] text-accent"
+                  avatarLoading && !avatarReady ? "bg-gold/10 text-ink" :
+                  voiceStatus === "playing" ? "bg-green/10 text-ink animate-pulse" :
+                  voiceStatus === "loading" ? "bg-gold/10 text-ink" :
+                  voiceStatus === "error" ? "bg-red/10 text-ink" :
+                  avatarReady && displayMode === "avatar" ? "bg-green/10 text-ink" :
+                  "bg-accent/20 text-ink"
                 }`}>
                   {avatarLoading && !avatarReady ? "🎬 Avatar loading..." :
                    voiceStatus === "playing" ? "🔊 Speaking..." :
@@ -780,8 +841,8 @@ export default function SessionPage() {
                   onClick={toggleDisplayMode}
                   className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold rounded-full border transition-colors ${
                     displayMode === "avatar"
-                      ? "bg-accent/[0.08] border-accent/30 text-accent hover:bg-accent/20"
-                      : "bg-surface border-border text-ink-3 hover:border-accent hover:text-accent"
+                      ? "bg-accent/15 border-accent/40 text-ink hover:bg-accent/25"
+                      : "bg-surface border-border text-ink-3 hover:border-accent hover:text-ink"
                   }`}
                   title={displayMode === "avatar" ? "Switch to chat mode" : "Switch to avatar mode"}
                 >
@@ -844,7 +905,7 @@ export default function SessionPage() {
                     AI
                   </div>
                 ) : (
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-accent text-white">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-accent text-ink">
                     You
                   </div>
                 )}
@@ -852,7 +913,7 @@ export default function SessionPage() {
                   className={`max-w-[72%] px-3.5 py-2.5 rounded-[12px] text-[13px] leading-relaxed ${
                     msg.role === "assistant"
                       ? "bg-white border border-border text-ink"
-                      : "bg-accent text-white"
+                      : "bg-accent text-ink"
                   }`}
                 >
                   {msg.content}
@@ -884,7 +945,7 @@ export default function SessionPage() {
                   className={`px-3 py-2.5 rounded-sm text-sm font-medium transition-all border ${
                     isListening
                       ? "bg-red/10 border-red text-red animate-pulse"
-                      : "bg-white border-border text-ink-3 hover:border-accent hover:text-accent"
+                      : "bg-white border-border text-ink-3 hover:border-accent hover:text-ink"
                   }`}
                   title={isListening ? "Stop listening" : "Speak"}
                 >
@@ -904,7 +965,7 @@ export default function SessionPage() {
               <button
                 onClick={sendMessage}
                 disabled={sending || !userMsg.trim()}
-                className="px-4 py-2.5 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors disabled:opacity-50"
+                className="px-4 py-2.5 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors disabled:opacity-50"
               >
                 Send
               </button>
@@ -919,7 +980,7 @@ export default function SessionPage() {
               <div className="mt-4 flex gap-3">
                 <button
                   onClick={() => router.push("/dashboard/roleplay")}
-                  className="px-4 py-2 bg-accent text-white rounded-sm text-sm font-medium hover:bg-[#4a3ce0] transition-colors"
+                  className="px-4 py-2 bg-ink text-white rounded-sm text-sm font-medium hover:bg-ink-2 transition-colors"
                 >
                   New Session
                 </button>
@@ -940,7 +1001,7 @@ export default function SessionPage() {
             <div className="font-semibold text-sm mb-3">Live Rubric Score</div>
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div className="text-center p-3 bg-surface rounded-sm">
-                <div className="text-2xl font-bold text-accent">{overallScore || "--"}</div>
+                <div className="text-2xl font-bold text-ink">{overallScore || "--"}</div>
                 <div className="text-[11px] text-ink-3">Overall</div>
               </div>
               <div className="text-center p-3 bg-surface rounded-sm">

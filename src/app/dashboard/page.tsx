@@ -58,7 +58,7 @@ export default async function DashboardPage() {
           <div className="text-xs text-ink-3 mb-4">Last 3 roleplays</div>
           <div className="flex flex-col gap-2.5">
             {[
-              { title: "CFO Discovery Call", when: "Today \u00b7 22 min", score: 78, color: "text-accent" },
+              { title: "CFO Discovery Call", when: "Today \u00b7 22 min", score: 78, color: "text-ink" },
               { title: "VP Sales Objection Handling", when: "Yesterday \u00b7 18 min", score: 65, color: "text-gold" },
               { title: "Enterprise Demo Close", when: "2 days ago \u00b7 31 min", score: 84, color: "text-green" },
             ].map((s) => (
