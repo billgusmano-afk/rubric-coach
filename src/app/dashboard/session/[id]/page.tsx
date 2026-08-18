@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { QuadrantChart, QNAMES, type QuadrantPoint } from "@/components/quadrant-chart";
 
 // Avatar ID and Voice ID are now passed server-side via the token API route
 
@@ -18,6 +19,20 @@ interface CriterionScore {
   criterion_name: string;
   score: number;
   feedback: string;
+}
+
+// Latest MMG Quadrant D read for the turn just scored
+interface QuadrantLatest {
+  quadrant: string;
+  quadrant_why: string | null;
+  rigor: number;
+  relevance: number;
+}
+
+// The two MMG rubric dimensions shown alongside the framework criteria
+interface MmgDims {
+  acumen: number;
+  self_orientation: number;
 }
 
 interface CompanyResearch {
@@ -113,6 +128,10 @@ export default function SessionPage() {
   const [turns, setTurns] = useState(0);
   const [criteriaScores, setCriteriaScores] = useState<CriterionScore[]>([]);
   const [nudges, setNudges] = useState<string[]>([]);
+  // MMG Quadrant D: one point per scored turn, plotted on the rigor/relevance chart
+  const [quadPoints, setQuadPoints] = useState<QuadrantPoint[]>([]);
+  const [quadLatest, setQuadLatest] = useState<QuadrantLatest | null>(null);
+  const [mmgDims, setMmgDims] = useState<MmgDims | null>(null);
   const [ending, setEnding] = useState(false);
   const [sessionSummary, setSessionSummary] = useState("");
   const [sessionEnded, setSessionEnded] = useState(false);
@@ -156,7 +175,7 @@ export default function SessionPage() {
 
       const { data: history } = await supabase
         .from("session_messages")
-        .select("role, content")
+        .select("role, content, rigor, relevance, quadrant, quadrant_why, acumen, self_orientation")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true });
 
@@ -166,6 +185,33 @@ export default function SessionPage() {
         role: m.role as "user" | "assistant",
         content: m.content,
       }));
+
+      // Rebuild the quadrant plot from the persisted per-message scores
+      const scoredTurns = (history || []).filter(
+        (m) => m.role === "user" && m.rigor != null && m.relevance != null
+      );
+      if (scoredTurns.length > 0) {
+        setQuadPoints(
+          scoredTurns.map((m) => ({
+            rigor: m.rigor as number,
+            relevance: m.relevance as number,
+            quadrant: (m.quadrant as string) || "A",
+          }))
+        );
+        const last = scoredTurns[scoredTurns.length - 1];
+        setQuadLatest({
+          quadrant: (last.quadrant as string) || "A",
+          quadrant_why: (last.quadrant_why as string) || null,
+          rigor: last.rigor as number,
+          relevance: last.relevance as number,
+        });
+        if (last.acumen != null && last.self_orientation != null) {
+          setMmgDims({
+            acumen: last.acumen as number,
+            self_orientation: last.self_orientation as number,
+          });
+        }
+      }
 
       setSessionData({
         session_id: session.id,
@@ -501,6 +547,25 @@ export default function SessionPage() {
         if (data.overall_score) setOverallScore(data.overall_score);
         if (data.scores) setCriteriaScores(data.scores);
         if (data.nudge) setNudges((prev) => [data.nudge, ...prev].slice(0, 5));
+
+        // MMG Quadrant D: plot this turn and update the latest read
+        if (data.rigor != null && data.relevance != null) {
+          const point: QuadrantPoint = {
+            rigor: data.rigor,
+            relevance: data.relevance,
+            quadrant: data.quadrant || "A",
+          };
+          setQuadPoints((prev) => [...prev, point]);
+          setQuadLatest({
+            quadrant: point.quadrant,
+            quadrant_why: data.quadrant_why || null,
+            rigor: point.rigor,
+            relevance: point.relevance,
+          });
+        }
+        if (data.acumen != null && data.self_orientation != null) {
+          setMmgDims({ acumen: data.acumen, self_orientation: data.self_orientation });
+        }
 
         // Speak AI response using browser speech synthesis
         if (sessionData.voice_enabled) {
@@ -995,8 +1060,33 @@ export default function SessionPage() {
           )}
         </div>
 
-        {/* ── Right panel: Live scoring + nudges ── */}
+        {/* ── Right panel: Quadrant D + live scoring + nudges ── */}
         <div>
+          {/* Quadrant D assessment — Daggett rigor/relevance, plotted per turn */}
+          <div className="bg-card border border-border rounded-[12px] p-4 shadow-card mb-4">
+            <div className="font-semibold text-sm mb-3">Quadrant D</div>
+            <QuadrantChart points={quadPoints} gradientId="mmgDgradLive" />
+            <div className="flex justify-between text-[10px] text-ink-3 mt-1 mb-2">
+              <span>◦ earlier turns</span>
+              <span>● latest turn</span>
+            </div>
+            {quadLatest ? (
+              <div className="text-xs text-ink-2 leading-relaxed">
+                <span className="font-semibold text-ink">
+                  Latest: Quadrant {quadLatest.quadrant} · {QNAMES[quadLatest.quadrant] || ""}
+                </span>
+                {" — "}rigor {quadLatest.rigor}/6, relevance {quadLatest.relevance}/5
+                {quadLatest.quadrant_why && (
+                  <span className="block italic text-ink-3 mt-1">{quadLatest.quadrant_why}</span>
+                )}
+              </div>
+            ) : (
+              <div className="text-xs text-ink-3 italic">
+                Send your first message — each one gets plotted here.
+              </div>
+            )}
+          </div>
+
           <div className="bg-card border border-border rounded-[12px] p-4 shadow-card mb-4">
             <div className="font-semibold text-sm mb-3">Live Rubric Score</div>
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -1031,6 +1121,28 @@ export default function SessionPage() {
               ) : (
                 <div className="text-xs text-ink-3 italic">Scores will appear after your first exchange...</div>
               )}
+              {/* MMG dimensions — scored on every turn alongside the framework criteria */}
+              {mmgDims &&
+                [
+                  { key: "acumen", name: "Business & financial acumen", score: mmgDims.acumen },
+                  { key: "self_orientation", name: "Low self-orientation", score: mmgDims.self_orientation },
+                ].map((d) => {
+                  const pct = (d.score / 5) * 100;
+                  return (
+                    <div key={d.key}>
+                      <div className="flex justify-between text-xs text-ink-3 mb-1">
+                        <span className="truncate mr-2">{d.name}</span>
+                        <span className="font-semibold text-ink">{d.score}</span>
+                      </div>
+                      <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-accent-2/60 transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
 

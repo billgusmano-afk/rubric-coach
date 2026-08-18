@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { QuadrantChart, type QuadrantPoint } from "@/components/quadrant-chart";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  rigor: number | null;
+  relevance: number | null;
+  quadrant: string | null;
 }
 
 interface Score {
@@ -104,7 +108,7 @@ export default function SessionDetailPage() {
           .single(),
         supabase
           .from("session_messages")
-          .select("id, role, content, created_at")
+          .select("id, role, content, created_at, rigor, relevance, quadrant")
           .eq("session_id", sessionId)
           .order("created_at", { ascending: true }),
         supabase
@@ -143,6 +147,19 @@ export default function SessionDetailPage() {
 
   const hasBriefing = session.proposal || session.objective || session.expected_objection ||
     session.partner_name || session.relationship_stage;
+
+  // MMG Quadrant D: rebuild the per-turn plot from persisted message scores
+  const quadPoints: QuadrantPoint[] = messages
+    .filter((m) => m.role === "user" && m.rigor != null && m.relevance != null)
+    .map((m) => ({
+      rigor: m.rigor as number,
+      relevance: m.relevance as number,
+      quadrant: m.quadrant || "A",
+    }));
+  const quadrantDPct =
+    quadPoints.length > 0
+      ? Math.round((quadPoints.filter((p) => p.quadrant === "D").length / quadPoints.length) * 100)
+      : null;
 
   return (
     <div className="p-8 max-w-[1000px]">
@@ -250,6 +267,24 @@ export default function SessionDetailPage() {
       )}
 
       {/* Scorecard tab */}
+      {activeTab === "scorecard" && quadrantDPct !== null && (
+        <div className="bg-card border border-border rounded-[12px] p-5 shadow-card mb-5">
+          <div className="flex items-start gap-5">
+            <div className="shrink-0 text-center">
+              <div className="text-4xl font-bold text-ink">{quadrantDPct}%</div>
+              <div className="text-[11px] text-ink-3 mt-0.5 max-w-[110px]">
+                of turns in Quadrant D
+              </div>
+              <div className="text-[10px] text-ink-3 mt-2">
+                {quadPoints.length} scored {quadPoints.length === 1 ? "turn" : "turns"}
+              </div>
+            </div>
+            <div className="flex-1 max-w-[300px]">
+              <QuadrantChart points={quadPoints} gradientId="mmgDgradHistory" />
+            </div>
+          </div>
+        </div>
+      )}
       {activeTab === "scorecard" && (
         <div className="bg-card border border-border rounded-[12px] p-5 shadow-card">
           {scores.length === 0 ? (
