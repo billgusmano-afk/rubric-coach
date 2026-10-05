@@ -11,6 +11,7 @@ Standalone JSON rubrics shipped with RubricCoach. Each file fully defines one pr
 | `challenger-sale.json` | Challenger Sale | 3 | Teach / Tailor / Take Control (+$5/mo) |
 | `meddic.json` | MEDDIC | 6 | Qualification rigor (+$5/mo) |
 | `strategic-management.json` | Strategic Management | 4 | Account planning & long-term value (+$5/mo) |
+| `ai-workload-readiness.json` | AI Workload Readiness | 6 | Pre-engagement measurement discipline for AI workload redesign (+$5/mo) |
 | `_template.json` | — | — | Starter template for building a new framework |
 
 ## Schema
