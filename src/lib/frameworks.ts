@@ -343,6 +343,92 @@ export const PRESET_FRAMEWORKS: PresetFramework[] = [
       },
     ],
   },
+  {
+    id: "ai-workload-readiness",
+    name: "AI Workload Readiness",
+    description:
+      "Scores the discipline of the pre-engagement conversation that defines how an AI workload redesign will be measured: scoping the unit, capturing the baseline, naming the role change, fixing the success measures, diagnosing adoption, and putting one name against the result.",
+    criteria: [
+      {
+        id: "awr-scope",
+        name: "Workload Scoping",
+        description: "Whether the rep narrows the conversation to a single workload with a trigger, a finished state, and a countable volume.",
+        weight_percent: 20,
+        levels: [
+          { level: 1, label: "Poor", description: "Accepts a department or function as the scope (\"customer service\", \"the claims team\") and never narrows it." },
+          { level: 2, label: "Below Average", description: "Names a process but leaves the trigger and finished state undefined, so two people would describe different work." },
+          { level: 3, label: "Adequate", description: "Defines one workload with a start and an end, but does not establish how many instances run per month." },
+          { level: 4, label: "Good", description: "Defines the workload, its trigger, its finished state, and gets a volume figure from the client." },
+          { level: 5, label: "Excellent", description: "Does all of that and applies the narrowing test out loud — splits the workload when the client's description could produce two different instances, and says plainly that an uncountable workload cannot be measured." },
+        ],
+      },
+      {
+        id: "awr-baseline",
+        name: "Baseline Capture",
+        description: "Whether the rep gets before-numbers with a stated source and an honest confidence level, rather than estimates offered as fact.",
+        weight_percent: 20,
+        levels: [
+          { level: 1, label: "Poor", description: "Takes no current-state numbers at all, or accepts a vague \"it takes about a day\" without pressing." },
+          { level: 2, label: "Below Average", description: "Collects one or two figures but never asks where they came from, so they cannot be re-measured later." },
+          { level: 3, label: "Adequate", description: "Collects several measures with sources, but does not distinguish a timed sample from a manager's guess." },
+          { level: 4, label: "Good", description: "Collects time, cost, and quality measures, names the source of each, and scores confidence." },
+          { level: 5, label: "Excellent", description: "Does all of that and is willing to stop — tells the client that with fewer than three high-confidence measures the workload is not yet measurable, and proposes instrumenting it before committing to targets." },
+        ],
+      },
+      {
+        id: "awr-roles",
+        name: "Role Delta",
+        description: "Whether the rep establishes what changes for the people who do the work, including what comes off their plate and what they are judged on.",
+        weight_percent: 20,
+        levels: [
+          { level: 1, label: "Poor", description: "Treats the redesign as a systems change. Never asks who performs the work or what changes for them." },
+          { level: 2, label: "Below Average", description: "Mentions training or communication as the people component, but does not examine the role itself." },
+          { level: 3, label: "Adequate", description: "Establishes what each role will do after the change, but not what they stop doing." },
+          { level: 4, label: "Good", description: "Covers what they do after, what they stop doing, and what is genuinely new to them." },
+          { level: 5, label: "Excellent", description: "Does all of that and raises the two uncomfortable rows directly — what the person will now be judged on and by whom, and what they could reasonably fear losing — treating both as design problems rather than communication problems." },
+        ],
+      },
+      {
+        id: "awr-success",
+        name: "Success Definition",
+        description: "Whether the rep drives to a small, signed set of measures with baselines, targets, dates, and a fixed measurement method.",
+        weight_percent: 20,
+        levels: [
+          { level: 1, label: "Poor", description: "Leaves success undefined, or settles for directional language like \"improved efficiency\" and \"better outcomes\"." },
+          { level: 2, label: "Below Average", description: "Proposes measures but no baselines or dates, so nothing can be compared at the end." },
+          { level: 3, label: "Adequate", description: "Gets three to five measures with baselines and targets, but all of them are speed or cost measures." },
+          { level: 4, label: "Good", description: "Includes a quality or risk measure and an adoption measure alongside the efficiency measures, each with a date." },
+          { level: 5, label: "Excellent", description: "Does all of that, fixes the measurement method to match the baseline method, names who agrees each target, and gets agreement in advance on what happens if a target is missed." },
+        ],
+      },
+      {
+        id: "awr-readiness",
+        name: "Adoption Diagnosis",
+        description: "Whether the rep treats non-adoption as something to diagnose with evidence rather than something to solve with training.",
+        weight_percent: 10,
+        levels: [
+          { level: 1, label: "Poor", description: "Treats adoption as a communication or change-fatigue issue. Offers a comms plan or a town hall." },
+          { level: 2, label: "Below Average", description: "Assumes the problem is skills and proposes training before establishing any cause." },
+          { level: 3, label: "Adequate", description: "Acknowledges adoption risk and proposes to survey or interview people, but without a defined construct." },
+          { level: 4, label: "Good", description: "Names specific drivers — role clarity, line of sight, perceived threat, self-efficacy — and proposes measuring them before and after." },
+          { level: 5, label: "Excellent", description: "Does all of that and distinguishes which driver a given symptom points to, explaining that training only moves self-efficacy and that low role clarity sends the work back to the role design." },
+        ],
+      },
+      {
+        id: "awr-owner",
+        name: "Measurement Ownership",
+        description: "Whether the rep puts one named person against the after-numbers and accepts accountability rather than leaving measurement with the client.",
+        weight_percent: 10,
+        levels: [
+          { level: 1, label: "Poor", description: "Leaves measurement unassigned, or assigns it to \"the team\" or a steering committee." },
+          { level: 2, label: "Below Average", description: "Assigns it to the client by default, with no access, date, or consequence attached." },
+          { level: 3, label: "Adequate", description: "Names one person and a due date, but does not secure the access they would need to produce the numbers." },
+          { level: 4, label: "Good", description: "Names one owner, the date, the reporting line, and the access required." },
+          { level: 5, label: "Excellent", description: "Takes the obligation onto the supplier side and commits in advance that the numbers will be reported whether or not they meet the targets — turning the attribution argument into an accountability the client can hold them to." },
+        ],
+      },
+    ],
+  },
 ];
 
 /** Look up a preset framework by ID */

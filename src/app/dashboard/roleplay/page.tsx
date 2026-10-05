@@ -62,6 +62,7 @@ const PRESET_FRAMEWORKS = [
   { id: "challenger-sale", name: "Challenger Sale", tag: "+$5", price: 5 },
   { id: "meddic", name: "MEDDIC", tag: "+$5", price: 5 },
   { id: "strategic-mgmt", name: "Strategic Management", tag: "+$5", price: 5 },
+  { id: "ai-workload-readiness", name: "AI Workload Readiness", tag: "+$5", price: 5 },
 ] as const;
 
 /* ───────────────────── Helpers ───────────────────── */
